@@ -11,10 +11,3 @@ all: $(TARGETS)
 
 $(TARGETS): $(SRCS)
 	$(CC) $< $(LIBS) $(CFLAGS) -o $@
-
-start_server:
-	./Serveur/server
-
-start_client:
-	./Client/client
-	
