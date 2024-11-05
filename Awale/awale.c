@@ -21,16 +21,54 @@ bool play(Plateau* p, unsigned short int num_case){
 
 }
 
-void print(Plateau* p, JOUEUR j, char* buffer){
+void printBoard(Plateau* p, JOUEUR j, char* buffer){
     switch(j){
         case JOUEUR1:
-            buffer = "-------------------------\n|"; // cases 7-12 en haut puis 1-6 en bas
+            sprintf(buffer,
+                "╔══╦══╦══╦══╦══╦══╗\n"
+                "║%02d║%02d║%02d║%02d║%02d║%02d║\n"
+                "╠══╬══╬══╬══╬══╬══╣\n"
+                "║%02d║%02d║%02d║%02d║%02d║%02d║\n"
+                "╚══╩══╩══╩══╩══╩══╝\n",
+                p->cases[0], p->cases[1], p->cases[2], p->cases[3], p->cases[4], p->cases[5],
+                p->cases[11], p->cases[10], p->cases[9], p->cases[8], p->cases[7], p->cases[6]
+            );
             break;
         case JOUEUR2:
-            buffer = "-------------------------\n|"; // cases 1-6 en haut puis 7-12 en bas
+            sprintf(buffer,
+                "╔══╦══╦══╦══╦══╦══╗\n"
+                "║%02d║%02d║%02d║%02d║%02d║%02d║\n"
+                "╠══╬══╬══╬══╬══╬══╣\n"
+                "║%02d║%02d║%02d║%02d║%02d║%02d║\n"
+                "╚══╩══╩══╩══╩══╩══╝\n",
+                p->cases[6], p->cases[7], p->cases[8], p->cases[9], p->cases[10], p->cases[11],
+                p->cases[5], p->cases[4], p->cases[3], p->cases[2], p->cases[1], p->cases[0]
+            );
             break;
         default:
             perror("joueur non défini");
             exit(errno);
     }
+}
+
+bool isWin(Plateau* p, JOUEUR j){
+    switch(j){
+        case JOUEUR1:
+            if (p->grainesJ1 > 24)
+                return true;
+            return false;
+        case JOUEUR2:
+            if (p->grainesJ2 > 24)
+                return true;
+            return false;
+        default:
+            perror("joueur non défini");
+            exit(errno);
+    }
+}
+
+bool isDraw(Plateau* p){
+    if (p->grainesJ1 == 24 && p->grainesJ2 == 24)
+        return true;
+    return false;
 }

@@ -7,9 +7,9 @@
 #define false 0
 #define true 1
 
-typedef unsigned short int JOUEUR
-typedef unsigned short int GRAINES
-typedef unsigned char bool
+typedef unsigned short int JOUEUR;
+typedef unsigned short int GRAINES;
+typedef unsigned char bool;
 
 
 typedef struct plateau{
@@ -22,6 +22,8 @@ typedef struct plateau{
 Plateau* init();
 void end(Plateau* p);
 bool play(Plateau* p, unsigned short int num_case);
-void print(Plateau* p, JOUEUR j);
+void printBoard(Plateau* p, JOUEUR j, char* buffer);
+bool isWin(Plateau* p, JOUEUR j);
+bool isDraw(Plateau* p);
 
 #endif /* guard */
