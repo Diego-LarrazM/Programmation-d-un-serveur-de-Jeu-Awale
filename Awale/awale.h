@@ -1,16 +1,14 @@
 #ifndef AWALE_H
 #define AWALE_H
 
-#define JOUEUR1 1 
-#define JOUEUR2 2
 #define NB_CASES 12
 #define false 0
 #define true 1
 
-typedef unsigned short int JOUEUR;
 typedef unsigned short int GRAINES;
 typedef unsigned char bool;
 
+typedef enum {JOUEUR1 = 1, JOUEUR2 = 2} JOUEUR;
 
 typedef struct plateau{
     GRAINES cases[NB_CASES]; // plateau avec ranges[i] le nombre de graines dans la case i+1. Le joueur 1 a les cases 1-6 et le joueur 2 7-12
