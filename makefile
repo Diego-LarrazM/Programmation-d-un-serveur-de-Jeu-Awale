@@ -1,13 +1,19 @@
 LIBS  = 
-CFLAGS = -Wall
+CFLAGS = 
 CC = gcc
 
-SRCS = $(wildcard Serveur/*.c) $(wildcard Client/*.c)
-TARGETS = $(SRCS:.c=)
+SRCS_S = $(wildcard Serveur/*.c) 
+SRCS_C = $(wildcard Client/*.c)
+TARGETS_C = $(SRCS_C:.c=)
+TARGETS_S = $(SRCS_S:.c=)
 
 
-.PHONY: $(TARGETS) start_server
-all: $(TARGETS)
+.PHONY: $(TARGETS_C) $(TARGETS_S)
+all: $(TARGETS_C) $(TARGETS_S)
 
-$(TARGETS): $(SRCS)
+$(TARGETS_C): $(SRCS_C)
 	$(CC) $< $(LIBS) $(CFLAGS) -o $@
+
+$(TARGETS_S): $(SRCS_S)
+	$(CC) $< $(LIBS) $(CFLAGS) -o $@
+
