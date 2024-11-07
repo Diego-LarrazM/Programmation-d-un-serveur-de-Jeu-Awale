@@ -84,7 +84,6 @@ BitField gererConquetes(Plateau* p, unsigned char num_case){
 
 
 void printBoard(Plateau* p, char* buffer){
-<<<<<<< HEAD
     switch((int)p->JoueurCourant * (int)p->sensJeu){
         case (int)JOUEUR1* (int)HORAIRE:
             sprintf(buffer,
@@ -129,52 +128,6 @@ void printBoard(Plateau* p, char* buffer){
             p->cases[6], p->cases[7], p->cases[8], p->cases[9], p->cases[10], p->cases[11],
             p->cases[5], p->cases[4], p->cases[3], p->cases[2], p->cases[1], p->cases[0]
             );
-=======
-    switch(p->JoueurCourant){
-        case JOUEUR1:
-            if (p->sensJeu == HORAIRE)
-                sprintf(buffer,
-                    "  ╔══╦══╦══╦══╦══╦══╗\n"
-                    "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┐\n"
-                    "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
-                    "└ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
-                    "  ╚══╩══╩══╩══╩══╩══╝\n",
-                    p->cases[0], p->cases[1], p->cases[2], p->cases[3], p->cases[4], p->cases[5],
-                    p->cases[11], p->cases[10], p->cases[9], p->cases[8], p->cases[7], p->cases[6]
-                );
-            else
-                sprintf(buffer,
-                    "  ╔══╦══╦══╦══╦══╦══╗\n"
-                    "┌ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
-                    "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
-                    "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
-                    "  ╚══╩══╩══╩══╩══╩══╝\n",
-                    p->cases[0], p->cases[1], p->cases[2], p->cases[3], p->cases[4], p->cases[5],
-                    p->cases[11], p->cases[10], p->cases[9], p->cases[8], p->cases[7], p->cases[6]
-                );
-            break;
-        case JOUEUR2:
-            if (p->sensJeu == HORAIRE)
-                sprintf(buffer,
-                    "  ╔══╦══╦══╦══╦══╦══╗\n"
-                    "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┐\n"
-                    "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
-                    "└ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
-                    "  ╚══╩══╩══╩══╩══╩══╝\n",
-                p->cases[6], p->cases[7], p->cases[8], p->cases[9], p->cases[10], p->cases[11],
-                p->cases[5], p->cases[4], p->cases[3], p->cases[2], p->cases[1], p->cases[0]
-                );
-            else
-                sprintf(buffer,
-                    "  ╔══╦══╦══╦══╦══╦══╗\n"
-                    "┌ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
-                    "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
-                    "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
-                    "  ╚══╩══╩══╩══╩══╩══╝\n",
-                p->cases[6], p->cases[7], p->cases[8], p->cases[9], p->cases[10], p->cases[11],
-                p->cases[5], p->cases[4], p->cases[3], p->cases[2], p->cases[1], p->cases[0]
-                );
->>>>>>> bb03a841eaa01ed463b134b063a0d332b4d03a99
             break;
         default:
             perror("joueur non défini");
@@ -194,7 +147,6 @@ Bool isDraw(Plateau* p){
     return false;
 }
 
-<<<<<<< HEAD
 BitField playableFamine(Plateau* p){
     BitField casesAutorise = 0; // les bits de 1 à 6 indiquent si les cases 1-6(Joueur1) ou 7-12 (Joueur2) sont jouables (égal à 1).
     int ajout = 1;
@@ -209,60 +161,6 @@ BitField playableFamine(Plateau* p){
             casesAutorise |= ajout; 
             ajout <<= 1;
         }
-=======
-casesPermises playableFamine(Plateau* p){
-    casesPermises casesAutorise = {0, 0, 0, 0, 0, 0};
-    int startInd;
-    switch(p->JoueurCourant){
-        case JOUEUR1:
-            if (p->sensJeu == HORAIRE)
-                startInd = 6;
-            else
-                startInd = 11;
-            break;
-        case JOUEUR2:
-            if (p->sensJeu == HORAIRE)
-                startInd = 0;
-            else
-                startInd = 5;
-            break;
-    }
-    if (p->cases[startInd] >= 6) {
-        if (p->sensJeu == HORAIRE)
-            casesAutorise.case6 = 1;
-        else
-            casesAutorise.case1 = 1;
-    }
-    if (p->cases[startInd + p->sensJeu] >= 5) {
-        if (p->sensJeu == HORAIRE)
-            casesAutorise.case5 = 1;
-        else
-            casesAutorise.case2 = 1;
-    }
-    if (p->cases[startInd + 2 * p->sensJeu] >= 4) {
-        if (p->sensJeu == HORAIRE)
-            casesAutorise.case4 = 1;
-        else
-            casesAutorise.case3 = 1;
-    }
-    if (p->cases[startInd + 3 * p->sensJeu] >= 3) {
-        if (p->sensJeu == HORAIRE)
-            casesAutorise.case3 = 1;
-        else
-            casesAutorise.case4 = 1;
-    }
-    if (p->cases[startInd + 4 * p->sensJeu] >= 2) {
-        if (p->sensJeu == HORAIRE)
-            casesAutorise.case2 = 1;
-        else
-            casesAutorise.case5 = 1;
-    }
-    if (p->cases[startInd + 5 * p->sensJeu] >= 1) {
-        if (p->sensJeu == HORAIRE)
-            casesAutorise.case1 = 1;
-        else
-            casesAutorise.case6 = 1;
->>>>>>> bb03a841eaa01ed463b134b063a0d332b4d03a99
     }
     return casesAutorise;
 }
