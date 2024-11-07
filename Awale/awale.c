@@ -136,39 +136,39 @@ casesPermises playableFamine(Plateau* p){
     }
     if (p->cases[startInd] >= 6) {
         if (p->sensJeu == HORAIRE)
-            casesAutorise->case6 = 1;
+            casesAutorise.case6 = 1;
         else
-            casesAutorise->case1 = 1;
+            casesAutorise.case1 = 1;
     }
     if (p->cases[startInd + p->sensJeu] >= 5) {
         if (p->sensJeu == HORAIRE)
-            casesAutorise->case5 = 1;
+            casesAutorise.case5 = 1;
         else
-            casesAutorise->case2 = 1;
+            casesAutorise.case2 = 1;
     }
     if (p->cases[startInd + 2 * p->sensJeu] >= 4) {
         if (p->sensJeu == HORAIRE)
-            casesAutorise->case4 = 1;
+            casesAutorise.case4 = 1;
         else
-            casesAutorise->case3 = 1;
+            casesAutorise.case3 = 1;
     }
     if (p->cases[startInd + 3 * p->sensJeu] >= 3) {
         if (p->sensJeu == HORAIRE)
-            casesAutorise->case3 = 1;
+            casesAutorise.case3 = 1;
         else
-            casesAutorise->case4 = 1;
+            casesAutorise.case4 = 1;
     }
     if (p->cases[startInd + 4 * p->sensJeu] >= 2) {
         if (p->sensJeu == HORAIRE)
-            casesAutorise->case2 = 1;
+            casesAutorise.case2 = 1;
         else
-            casesAutorise->case5 = 1;
+            casesAutorise.case5 = 1;
     }
     if (p->cases[startInd + 5 * p->sensJeu] >= 1) {
         if (p->sensJeu == HORAIRE)
-            casesAutorise->case1 = 1;
+            casesAutorise.case1 = 1;
         else
-            casesAutorise->case6 = 1;
+            casesAutorise.case6 = 1;
     }
     return casesAutorise;
 }
