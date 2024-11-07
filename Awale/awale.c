@@ -23,7 +23,7 @@ bool play(Plateau* p, unsigned short int num_case){
 
 void printBoard(Plateau* p, JOUEUR j, char* buffer){
     switch(j){
-        case JOUEUR1:
+        case JOUEUR2:
             sprintf(buffer,
                 "╔══╦══╦══╦══╦══╦══╗\n"
                 "║%02d║%02d║%02d║%02d║%02d║%02d║\n"
@@ -34,7 +34,7 @@ void printBoard(Plateau* p, JOUEUR j, char* buffer){
                 p->cases[11], p->cases[10], p->cases[9], p->cases[8], p->cases[7], p->cases[6]
             );
             break;
-        case JOUEUR2:
+        case JOUEUR1:
             sprintf(buffer,
                 "╔══╦══╦══╦══╦══╦══╗\n"
                 "║%02d║%02d║%02d║%02d║%02d║%02d║\n"
