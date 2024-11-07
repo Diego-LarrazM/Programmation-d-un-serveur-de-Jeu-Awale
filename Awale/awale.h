@@ -8,6 +8,7 @@
 typedef unsigned short int Graines;
 typedef unsigned short int Bool;
 typedef enum {JOUEUR1 = 1, JOUEUR2 = 2} Joueur;
+typedef enum {AHORAIRE = -1, HORAIRE = 1} Sens;
 
 typedef struct bitField{
     Bool case1 : 1; // store 1 bit
@@ -23,14 +24,17 @@ typedef struct plateau{
     Graines grainesJ1; // graines du joueur 1
     Graines grainesJ2; // graines du joueur 2
     Joueur JoueurCourant;
+    Sens sensJeu;
 } Plateau;
 
 Plateau* init();
 void end(Plateau* p);
 Bool play(Plateau* p, unsigned short int num_case);
-casesPermises famine(Plateau* p, Joueur j);
-void printBoard(Plateau* p, Joueur j, char* buffer);
-Bool isWin(Plateau* p, Joueur j);
+casesPermises playableFamine(Plateau* p);
+void printBoard(Plateau* p, char* buffer);
+Bool hasWon(Plateau* p);
 Bool isDraw(Plateau* p);
+void collectAllPoints(Plateau* p);
+Bool isOpponentFamished(Plateau* p);
 
 #endif /* guard */
