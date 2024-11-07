@@ -64,7 +64,7 @@ void printBoard(Plateau* p, char* buffer){
                     "  ╔══╦══╦══╦══╦══╦══╗\n"
                     "┌ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
                     "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
-                    " >║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
+                    "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
                     "  ╚══╩══╩══╩══╩══╩══╝\n",
                     p->cases[0], p->cases[1], p->cases[2], p->cases[3], p->cases[4], p->cases[5],
                     p->cases[11], p->cases[10], p->cases[9], p->cases[8], p->cases[7], p->cases[6]
@@ -86,7 +86,7 @@ void printBoard(Plateau* p, char* buffer){
                     "  ╔══╦══╦══╦══╦══╦══╗\n"
                     "┌ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
                     "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
-                    " >║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
+                    "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
                     "  ╚══╩══╩══╩══╩══╩══╝\n",
                 p->cases[6], p->cases[7], p->cases[8], p->cases[9], p->cases[10], p->cases[11],
                 p->cases[5], p->cases[4], p->cases[3], p->cases[2], p->cases[1], p->cases[0]
