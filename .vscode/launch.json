@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": ".",
-      "program": "build/Debug/outDebug",
+      "cwd": "c:/Users/Opgem/Desktop/trabajos uni/IF4/ProjReseaux/Programmation-d-un-serveur-de-Jeu-Awale/Awale",
+      "program": "c:/Users/Opgem/Desktop/trabajos uni/IF4/ProjReseaux/Programmation-d-un-serveur-de-Jeu-Awale/Awale/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
