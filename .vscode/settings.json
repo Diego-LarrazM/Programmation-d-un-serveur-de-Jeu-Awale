@@ -2,7 +2,8 @@
   "files.associations": {
     "stdlib.h": "c",
     "stdio.h": "c",
-    "server2.h": "c"
+    "server2.h": "c",
+    "awale.h": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

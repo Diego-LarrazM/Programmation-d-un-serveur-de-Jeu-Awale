@@ -18,122 +18,90 @@ Plateau* init(){
     return p;
 }
 
+
 void end(Plateau* p){
     free(p);
 }
 
 void changePlayer(Plateau* p){
     switch(p->JoueurCourant){
-        case JOUEUR1:
-            p->JoueurCourant = JOUEUR2;
-            break;
-        case JOUEUR2:
-            p->JoueurCourant = JOUEUR1;
-            break;
+    case JOUEUR1:
+        p->JoueurCourant = JOUEUR2;
+        break;
+    case JOUEUR2:
+        p->JoueurCourant = JOUEUR1;
+        break;
     }
 }
 
-Bool canPlay(Plateau* p, unsigned char num_case){
-	  if (p->JoueurCourant == JOUEUR1 && (num_case < 6 || num_case > 11))
-        return false;
-    if (p->JoueurCourant == JOUEUR2 && num_case > 5)
-        return false;
-    if (p->cases[num_case] == 0)
-        return false;
+Bool play(Plateau* p, NumCase num_case){
+    if(cantPlay(p, num_case)) return false;
+    NumCase caseArrêt = semerGraines();
+    BitField_1o casesConquises = trouverCasesConquises(p, caseArrêt);
+    if (casesConquises != 63) // casesConquises == 11111111 soit toutes les cases énemies sont conquises
+        requisitionConquetes(p, casesConquises);
     return true;
 }
 
-void gererDepassement(unsigned char* num_case){
-    if (num_case == 12) *num_case = 0; 
-    else if (num_case > 12) *num_case = 11; // unsigned char => (0 - 1) == (255)
+Bool cantPlay(Plateau* p, NumCase num_case){
+	  if (p->JoueurCourant == JOUEUR1 && (num_case < 6 || num_case > 11))
+        return true;
+    if (p->JoueurCourant == JOUEUR2 && num_case > 5)
+        return true;
+    if (p->cases[num_case] == 0)
+        return true;
+    return false;
 }
 
-BitField play(Plateau* p, unsigned char num_case){
-    unsigned char originalNum_case = num_case;
+
+void gererDepassementPlateau(NumCase* num_case){
+    if (*num_case == 12) *num_case = 0; 
+    else if (*num_case > 12) *num_case = 11; // unsigned char => (0 - 1) == (255)
+}
+
+
+NumCase semerGraines(Plateau* p, NumCase num_case){
+    NumCase originalNum_case = num_case;
   	
-    int nbSeeds = p->cases[num_case];
+    Graines nbSeeds = p->cases[num_case];
     p->cases[num_case] = 0;
     do {
         num_case += p->sensJeu;
-        gererDepassement(&num_case);
+        gererDepassementPlateau(&num_case);
         if (num_case != originalNum_case) {
             ++p->cases[num_case]
             --nbSeeds;
         }
-    }while (nbSeeds);
-    return gererConquetes(p,num_case);
+    } while (nbSeeds);
+    return num_case;
 }
 
-            
-BitField gererConquetes(Plateau* p, unsigned char num_case){
-    BitField caseConquise = 0;
-    while (p->cases[num_case] == 2 || p->cases[num_case] == 3 && ((p->JoueurCourant == JOUEUR1 && num_case > 5) || (p->JoueurCourant == JOUEUR2 && num_case < 6))){
-        caseConquise |= (1 << num_case);
 
-        if (p->JoueurCourant == JOUEUR1)  
-            p->grainesJ1 += p->cases[num_case];
-        else //JOUEUR2
-            p->grainesJ2 += p->cases[num_case]; 
-        p->cases[num_case] = 0;
-        
+BitField_1o trouverCasesConquises(Plateau* p, NumCase num_case){
+    BitField_1o caseConquise = 0;
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6;
+    // Tant que dans le camp enemi et qu'il y a 2 ou 3 graines on a conquis
+    while (p->cases[num_case] == 2 || p->cases[num_case] == 3 && ((p->JoueurCourant == JOUEUR1 && num_case > 5) || (p->JoueurCourant == JOUEUR2 && num_case < 6))){
+        caseConquise |= (1 << (num_case - offset));
         num_case -= p->sensJeu;
-        gererDepassement(&num_case);
+        gererDepassementPlateau(&num_case);
     }
     return caseConquise;
-}
+}  
 
-
-void printBoard(Plateau* p, char* buffer){
-    switch((int)p->JoueurCourant * (int)p->sensJeu){
-        case (int)JOUEUR1* (int)HORAIRE:
-            sprintf(buffer,
-                "  ╔══╦══╦══╦══╦══╦══╗\n"
-                "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┐\n"
-                "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
-                "└ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
-                "  ╚══╩══╩══╩══╩══╩══╝\n",
-                p->cases[0], p->cases[1], p->cases[2], p->cases[3], p->cases[4], p->cases[5],
-                p->cases[11], p->cases[10], p->cases[9], p->cases[8], p->cases[7], p->cases[6]
-            );
-            break;
-        case (int)JOUEUR1* (int)AHORAIRE:
-            sprintf(buffer,
-                "  ╔══╦══╦══╦══╦══╦══╗\n"
-                "┌ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
-                "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
-                " >║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
-                "  ╚══╩══╩══╩══╩══╩══╝\n",
-                p->cases[0], p->cases[1], p->cases[2], p->cases[3], p->cases[4], p->cases[5],
-                p->cases[11], p->cases[10], p->cases[9], p->cases[8], p->cases[7], p->cases[6]
-            );
-            break;
-        case (int)JOUEUR2 * (int)HORAIRE:
-            sprintf(buffer,
-                "  ╔══╦══╦══╦══╦══╦══╗\n"
-                "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┐\n"
-                "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
-                "└ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
-                "  ╚══╩══╩══╩══╩══╩══╝\n",
-            p->cases[6], p->cases[7], p->cases[8], p->cases[9], p->cases[10], p->cases[11],
-            p->cases[5], p->cases[4], p->cases[3], p->cases[2], p->cases[1], p->cases[0]
-            );
-            break;
-        case (int)JOUEUR2 * (int)AHORAIRE:
-            sprintf(buffer,
-                "  ╔══╦══╦══╦══╦══╦══╗\n"
-                "┌ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
-                "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
-                " >║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
-                "  ╚══╩══╩══╩══╩══╩══╝\n",
-            p->cases[6], p->cases[7], p->cases[8], p->cases[9], p->cases[10], p->cases[11],
-            p->cases[5], p->cases[4], p->cases[3], p->cases[2], p->cases[1], p->cases[0]
-            );
-            break;
-        default:
-            perror("joueur non défini");
-            exit(errno);
+void recolterConquetes(Plateau* p, BitField_1o casesConquises){
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6;
+    for(NumCase i = 0; i < 6 && casesConquises; ++i, casesConquises >>= 1;){
+        if (p->JoueurCourant == JOUEUR1)  
+            p->grainesJ1 += p->cases[i + offset];
+        else //JOUEUR2
+            p->grainesJ2 += p->cases[i + offset]; 
+        p->cases[i + offset] = 0;
     }
 }
+
+ 
+
 
 Bool hasWon(Plateau* p){
     if(p->JoueurCourant == JOUEUR1  && p->grainesJ1 > 24) return true;
@@ -141,16 +109,18 @@ Bool hasWon(Plateau* p){
     return false;
 }
 
+
 Bool isDraw(Plateau* p){
     if (p->grainesJ1 == 24 && p->grainesJ2 == 24)
         return true;
     return false;
 }
 
-BitField playableFamine(Plateau* p){
-    BitField casesAutorise = 0; // les bits de 1 à 6 indiquent si les cases 1-6(Joueur1) ou 7-12 (Joueur2) sont jouables (égal à 1).
+
+BitField_1o playableFamine(Plateau* p){
+    BitField_1o casesAutorise = 0; // les bits de 1 à 6 indiquent si les cases 1-6(Joueur1) ou 7-12 (Joueur2) sont jouables (égal à 1).
     int ajout = 1;
-    int offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;;
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
 
     for(int i = offset; i < 6 + offset; i++) {
         /*
@@ -164,6 +134,7 @@ BitField playableFamine(Plateau* p){
     }
     return casesAutorise;
 }
+
 
 void collectAllPoints(Plateau* p){
     if(p->JoueurCourant == JOUEUR1)
@@ -179,10 +150,64 @@ void collectAllPoints(Plateau* p){
     }
 }
 
+
 Bool isOpponentFamished(Plateau* p){
     int i;
-    int offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
     for (i = offset ; i < 6 + offset; ++i)
         if(p->cases[i] != 0) return false;
     return true;
 }
+
+void printBoard(Plateau* p, char* buffer){
+    switch((int)p->JoueurCourant * (int)p->sensJeu){
+    case (int)JOUEUR1* (int)HORAIRE:
+        sprintf(buffer,
+            "  ╔══╦══╦══╦══╦══╦══╗\n"
+            "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┐\n"
+            "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
+            "└ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
+            "  ╚══╩══╩══╩══╩══╩══╝\n",
+            p->cases[0], p->cases[1], p->cases[2], p->cases[3], p->cases[4], p->cases[5],
+            p->cases[11], p->cases[10], p->cases[9], p->cases[8], p->cases[7], p->cases[6]
+        );
+        break;
+    case (int)JOUEUR1* (int)AHORAIRE:
+        sprintf(buffer,
+            "  ╔══╦══╦══╦══╦══╦══╗\n"
+            "┌ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
+            "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
+            " >║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
+            "  ╚══╩══╩══╩══╩══╩══╝\n",
+            p->cases[0], p->cases[1], p->cases[2], p->cases[3], p->cases[4], p->cases[5],
+            p->cases[11], p->cases[10], p->cases[9], p->cases[8], p->cases[7], p->cases[6]
+        );
+        break;
+    case (int)JOUEUR2 * (int)HORAIRE:
+        sprintf(buffer,
+            "  ╔══╦══╦══╦══╦══╦══╗\n"
+            "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┐\n"
+            "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
+            "└ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
+            "  ╚══╩══╩══╩══╩══╩══╝\n",
+        p->cases[6], p->cases[7], p->cases[8], p->cases[9], p->cases[10], p->cases[11],
+        p->cases[5], p->cases[4], p->cases[3], p->cases[2], p->cases[1], p->cases[0]
+        );
+        break;
+    case (int)JOUEUR2 * (int)AHORAIRE:
+        sprintf(buffer,
+            "  ╔══╦══╦══╦══╦══╦══╗\n"
+            "┌ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
+            "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
+            " >║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
+            "  ╚══╩══╩══╩══╩══╩══╝\n",
+        p->cases[6], p->cases[7], p->cases[8], p->cases[9], p->cases[10], p->cases[11],
+        p->cases[5], p->cases[4], p->cases[3], p->cases[2], p->cases[1], p->cases[0]
+        );
+        break;
+    default:
+        perror("joueur non défini");
+        exit(errno);
+    }
+}
+
