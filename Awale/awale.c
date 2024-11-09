@@ -118,7 +118,7 @@ Bool isDraw(Plateau* p){
 
 Bool isOpponentFamished(Plateau* p){
     int i;
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6;
     for (i = offset ; i < 6 + offset; ++i)
         if(p->cases[i] != 0) return false;
     return true;
@@ -127,7 +127,7 @@ Bool isOpponentFamished(Plateau* p){
 BitField_1o playableFamine(Plateau* p){
     BitField_1o casesAutorise = 0; // les bits de 1 à 6 indiquent si les cases 1-6(Joueur1) ou 7-12 (Joueur2) sont jouables (égal à 1).
     int ajout = 1;
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6;
 
     for(int i = offset; i < 6 + offset; i++) {
         /*
