@@ -4,7 +4,7 @@
 
 Plateau* init(){
     Plateau* p = (Plateau*)malloc(sizeof(Plateau));
-    for(int i = 0; i < NB_CASES; p->cases[i++] = 4);
+    for(int i = 0; i < NB_CASES; ++i) p->cases[i] = 4;
     p->grainesJ1 = p->grainesJ2 = 0;
 
 
