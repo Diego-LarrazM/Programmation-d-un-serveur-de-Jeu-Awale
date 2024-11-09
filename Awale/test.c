@@ -3,13 +3,16 @@
 
 void bitfieldToString(BitField_1o cases, char* buffer){
   NumCase i = 1;
+  NumCase j = 0;
     while(cases){
-      buffer[i] = 48 + i;
+      buffer[j] = 48 + i;
+      buffer[j + 1] = ' ';
       ++i;
-      cases >> 1;
+      j += 2;
+      cases >>= 1;
       
     }
-    buffer[i] = '\0';
+    buffer[j] = '\0';
 }
 
 int main(){
@@ -17,8 +20,8 @@ int main(){
   Plateau* plateauJeu = init();
   Bool playing = true;
   while(playing){
-    BitField_1o casesJouables = playableFamine(plateauJeu);
-    char* casesJouablesStr;
+    BitField_1o casesJouables = isOpponentFamished(plateauJeu) ? playableFamine(plateauJeu) : 63;
+    char casesJouablesStr[13];
     bitfieldToString(casesJouables, casesJouablesStr);
     NumCase caseAJouer;
 
@@ -26,6 +29,7 @@ int main(){
     do {
       printf("Choissisez une case parmis: %s\n", casesJouablesStr);
       scanf("%d", &caseAJouer);
+      caseAJouer -= 1;
     } while (!play(plateauJeu, caseAJouer));
 
     playing = !(hasWon(plateauJeu) || isDraw(plateauJeu));

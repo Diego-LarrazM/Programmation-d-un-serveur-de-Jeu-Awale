@@ -78,7 +78,7 @@ NumCase semerGraines(Plateau* p, NumCase num_case){
 
 BitField_1o trouverCasesConquises(Plateau* p, NumCase num_case){
     BitField_1o caseConquise = 0;
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6;
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
     // Tant que dans le camp enemi et qu'il y a 2 ou 3 graines on a conquis
     while (p->cases[num_case] == 2 || p->cases[num_case] == 3 && ((p->JoueurCourant == JOUEUR1 && num_case > 5) || (p->JoueurCourant == JOUEUR2 && num_case < 6))){
         caseConquise |= (1 << (num_case - offset));
@@ -89,7 +89,7 @@ BitField_1o trouverCasesConquises(Plateau* p, NumCase num_case){
 }  
 
 void recolterConquetes(Plateau* p, BitField_1o casesConquises){
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6;
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
     for(NumCase i = 0; i < 6 && casesConquises; ++i, casesConquises >>= 1){
         if (p->JoueurCourant == JOUEUR1)  
             p->grainesJ1 += p->cases[i + offset];
@@ -116,10 +116,18 @@ Bool isDraw(Plateau* p){
 }
 
 
+Bool isOpponentFamished(Plateau* p){
+    int i;
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6
+    for (i = offset ; i < 6 + offset; ++i)
+        if(p->cases[i] != 0) return false;
+    return true;
+}
+
 BitField_1o playableFamine(Plateau* p){
     BitField_1o casesAutorise = 0; // les bits de 1 à 6 indiquent si les cases 1-6(Joueur1) ou 7-12 (Joueur2) sont jouables (égal à 1).
     int ajout = 1;
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6
 
     for(int i = offset; i < 6 + offset; i++) {
         /*
@@ -149,14 +157,6 @@ void collectAllPoints(Plateau* p){
     }
 }
 
-
-Bool isOpponentFamished(Plateau* p){
-    int i;
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
-    for (i = offset ; i < 6 + offset; ++i)
-        if(p->cases[i] != 0) return false;
-    return true;
-}
 
 void printBoard(Plateau* p, char* buffer){
     switch((int)p->JoueurCourant * (int)p->sensJeu){
