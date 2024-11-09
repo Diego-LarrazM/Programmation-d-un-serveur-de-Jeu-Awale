@@ -1,9 +1,17 @@
 #ifndef AWALE_H
 #define AWALE_H
 
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>
+
+
 #define NB_CASES 12
 #define false 0
 #define true 1
+
 
 typedef unsigned char Graines;
 typedef unsigned char NumCase;

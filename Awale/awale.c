@@ -1,6 +1,5 @@
 #include "awale.h"
-#include <stdlib>
-#include <errno.h>
+
 
 
 Plateau* init(){
@@ -36,10 +35,10 @@ void changePlayer(Plateau* p){
 
 Bool play(Plateau* p, NumCase num_case){
     if(cantPlay(p, num_case)) return false;
-    NumCase caseArrêt = semerGraines();
-    BitField_1o casesConquises = trouverCasesConquises(p, caseArrêt);
+    NumCase caseArret = semerGraines(p, num_case);
+    BitField_1o casesConquises = trouverCasesConquises(p, caseArret);
     if (casesConquises != 63) // casesConquises == 11111111 soit toutes les cases énemies sont conquises
-        requisitionConquetes(p, casesConquises);
+        recolterConquetes(p, casesConquises);
     return true;
 }
 
@@ -69,7 +68,7 @@ NumCase semerGraines(Plateau* p, NumCase num_case){
         num_case += p->sensJeu;
         gererDepassementPlateau(&num_case);
         if (num_case != originalNum_case) {
-            ++p->cases[num_case]
+            ++p->cases[num_case];
             --nbSeeds;
         }
     } while (nbSeeds);
@@ -91,7 +90,7 @@ BitField_1o trouverCasesConquises(Plateau* p, NumCase num_case){
 
 void recolterConquetes(Plateau* p, BitField_1o casesConquises){
     NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6;
-    for(NumCase i = 0; i < 6 && casesConquises; ++i, casesConquises >>= 1;){
+    for(NumCase i = 0; i < 6 && casesConquises; ++i, casesConquises >>= 1){
         if (p->JoueurCourant == JOUEUR1)  
             p->grainesJ1 += p->cases[i + offset];
         else //JOUEUR2
@@ -163,44 +162,44 @@ void printBoard(Plateau* p, char* buffer){
     switch((int)p->JoueurCourant * (int)p->sensJeu){
     case (int)JOUEUR1* (int)HORAIRE:
         sprintf(buffer,
-            "  ╔══╦══╦══╦══╦══╦══╗\n"
+            "  ╔01╦02╦03╦04╦05╦06╗\n"
             "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┐\n"
             "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
             "└ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
-            "  ╚══╩══╩══╩══╩══╩══╝\n",
+            "  ╚12╩11╩10╩09╩08╩07╝\n",
             p->cases[0], p->cases[1], p->cases[2], p->cases[3], p->cases[4], p->cases[5],
             p->cases[11], p->cases[10], p->cases[9], p->cases[8], p->cases[7], p->cases[6]
         );
         break;
     case (int)JOUEUR1* (int)AHORAIRE:
         sprintf(buffer,
-            "  ╔══╦══╦══╦══╦══╦══╗\n"
+            "  ╔01╦02╦03╦04╦05╦06╗\n"
             "┌ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
             "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
             " >║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
-            "  ╚══╩══╩══╩══╩══╩══╝\n",
+            "  ╚12╩11╩10╩09╩08╩07╝\n",
             p->cases[0], p->cases[1], p->cases[2], p->cases[3], p->cases[4], p->cases[5],
             p->cases[11], p->cases[10], p->cases[9], p->cases[8], p->cases[7], p->cases[6]
         );
         break;
     case (int)JOUEUR2 * (int)HORAIRE:
         sprintf(buffer,
-            "  ╔══╦══╦══╦══╦══╦══╗\n"
+            "  ╔07╦08╦09╦10╦11╦12╗\n"
             "> ║%02d║%02d║%02d║%02d║%02d║%02d║ ┐\n"
             "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
             "└ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
-            "  ╚══╩══╩══╩══╩══╩══╝\n",
+            "  ╚06╩05╩04╩03╩02╩01╝\n",
         p->cases[6], p->cases[7], p->cases[8], p->cases[9], p->cases[10], p->cases[11],
         p->cases[5], p->cases[4], p->cases[3], p->cases[2], p->cases[1], p->cases[0]
         );
         break;
     case (int)JOUEUR2 * (int)AHORAIRE:
         sprintf(buffer,
-            "  ╔══╦══╦══╦══╦══╦══╗\n"
+            "  ╔07╦08╦09╦10╦11╦12╗\n"
             "┌ ║%02d║%02d║%02d║%02d║%02d║%02d║ <\n"
             "│ ╠══╬══╬══╬══╬══╬══╣ │\n"
             " >║%02d║%02d║%02d║%02d║%02d║%02d║ ┘\n"
-            "  ╚══╩══╩══╩══╩══╩══╝\n",
+            "  ╚06╩05╩04╩03╩02╩01╝\n",
         p->cases[6], p->cases[7], p->cases[8], p->cases[9], p->cases[10], p->cases[11],
         p->cases[5], p->cases[4], p->cases[3], p->cases[2], p->cases[1], p->cases[0]
         );
