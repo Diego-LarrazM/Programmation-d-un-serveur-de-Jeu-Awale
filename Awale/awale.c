@@ -80,7 +80,7 @@ BitField_1o trouverCasesConquises(Plateau* p, NumCase num_case){
     BitField_1o caseConquise = 0;
     NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
     // Tant que dans le camp enemi et qu'il y a 2 ou 3 graines on a conquis
-    while (p->cases[num_case] == 2 || p->cases[num_case] == 3 && ((p->JoueurCourant == JOUEUR1 && num_case > 5) || (p->JoueurCourant == JOUEUR2 && num_case < 6))){
+    while ((p->cases[num_case] == 2 || p->cases[num_case] == 3) && ((p->JoueurCourant == JOUEUR1 && num_case < 6) || (p->JoueurCourant == JOUEUR2 && num_case > 5))){
         caseConquise |= (1 << (num_case - offset));
         num_case -= p->sensJeu;
         gererDepassementPlateau(&num_case);
@@ -91,11 +91,13 @@ BitField_1o trouverCasesConquises(Plateau* p, NumCase num_case){
 void recolterConquetes(Plateau* p, BitField_1o casesConquises){
     NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
     for(NumCase i = 0; i < 6 && casesConquises; ++i, casesConquises >>= 1){
-        if (p->JoueurCourant == JOUEUR1)  
-            p->grainesJ1 += p->cases[i + offset];
-        else //JOUEUR2
-            p->grainesJ2 += p->cases[i + offset]; 
-        p->cases[i + offset] = 0;
+	if (casesConquises & 1) {
+            if (p->JoueurCourant == JOUEUR1)  
+                 p->grainesJ1 += p->cases[i + offset];
+            else //JOUEUR2
+                 p->grainesJ2 += p->cases[i + offset]; 
+            p->cases[i + offset] = 0;
+	}
     }
 }
 
@@ -118,7 +120,7 @@ Bool isDraw(Plateau* p){
 
 Bool isOpponentFamished(Plateau* p){
     int i;
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6;
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
     for (i = offset ; i < 6 + offset; ++i)
         if(p->cases[i] != 0) return false;
     return true;
