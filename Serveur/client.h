@@ -10,7 +10,7 @@
 
 typedef enum {
 AWAITING_RESPONSE = 0, 
-DISCONECTED_FGAME = -1, // only if disconexion from game
+DISCONNECTED_FGAME = -1, // only if disconexion from game
 IDLE = 1, 
 CHALLENGING = 2, 
 IN_GAME = 3,

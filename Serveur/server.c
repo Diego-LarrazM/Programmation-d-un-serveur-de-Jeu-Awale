@@ -118,37 +118,29 @@ static void app(void)
 
          Client c = { csock };
          PlayerInfo p;
+         p.playerState = IDLE;
          c.player = &p;
          strncpy(p.name, buffer, MAX_NAME_SIZE - 1);
          strncpy(p.password, buffer, MAX_PASSWORD_SIZE - 1);
 
          int index_player = index_name_player(players, actual_players, p.name);
-         if (index_player == actual_players){
+         if (index_player == actual_players){ // New Player
             players[actual_players] = p;
             ++actual_players;
          }
-         else {
-            if (strcmp(players[index_player].password, p.password) == 0){
-               ///////////////////////// AJOUTER A LA LISTE DES CLIENTS ///////////////////////////////////////////////////
-            }
-         }
-
-         int index = index_name_client(clients, actual_clients, c.name);
-         if (index != actual_clients && clients[index].playerState != DISCONNECTED_FGAME)
+         else if (strcmp(players[index_player].password, p.password) != 0) // Wrong password
             continue;
-         if (index == actual_clients) {
+
+         int index_client = index_name_client(clients, actual_clients, p.name);
+         if (index_client != actual_clients && clients[index_client].player->playerState != DISCONNECTED_FGAME)
+            continue;
+         if (index_client == actual_clients) {
             clients[actual_clients] = c;
-            actual_clients++;
+            ++actual_clients;
          }
          else {
-            clients[index].playerState = IN_GAME;
+            clients[actual_clients].player->playerState = IN_GAME;
          }
-
-
-
-
-
-
          //////////////////////////////////////////////////////////////////////////////////// CONNECTING CLIENT
       }
       else
