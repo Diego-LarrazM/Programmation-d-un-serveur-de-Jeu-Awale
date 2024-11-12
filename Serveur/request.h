@@ -1,3 +1,19 @@
+#include "client.h"
+
+#define LOGOUT 0
+#define PROFILE 1
+#define MESSAGE 2
+#define CHALLENGE 3
+#define PLAY 4
+#define MOVE 5
+#define FRIEND 6
+#define RESPOND_FRIEND 7
+#define ACTIVE_PLAYERS 8
+#define ACTIVE_GAMES 9
+#define OBSERVE 10
+#define QUIT 11
+
+
 typedef struct {
    unsigned int signature: 16;
    unsigned int size: 16; 
@@ -32,7 +48,7 @@ typedef struct {
    unsigned int size: 16; 
    Bool player;
    char player_name[MAX_NAME_SIZE]; // MAX BUF_SIZE admitted: 65535 - 1
-   //char excess[BUF_SIZE - 1 - MAX_NAME_SIZE]; 
+   char message[BUF_SIZE - sizeof(Bool) - MAX_NAME_SIZE];
 }MessageRequest;
 
 typedef struct {
@@ -40,7 +56,7 @@ typedef struct {
    unsigned int size: 16; 
    Bool private;
    char player_name[MAX_NAME_SIZE]; // MAX BUF_SIZE admitted: 65535 - 1
-   //char excess[BUF_SIZE - 1 - MAX_NAME_SIZE]; 
+   //char excess[BUF_SIZE - sizeof(Bool) - MAX_NAME_SIZE]; 
 }ChallengeRequest;
 
 typedef struct {
@@ -48,7 +64,7 @@ typedef struct {
    unsigned int size: 16; 
    Bool private;
    Bool online;
-   //char excess[BUF_SIZE - 2]; 
+   //char excess[BUF_SIZE - 2*sizeof(Bool)]; 
 }PlayRequest;
 
 typedef struct {
@@ -69,21 +85,21 @@ typedef struct {
    unsigned int signature: 16;
    unsigned int size: 16; 
    Bool validation;
-   //char excess[BUF_SIZE - 1]; 
-}Response;
+   //char excess[BUF_SIZE - sizeof(Bool)]; 
+}RespondFriendRequest;
 
 typedef struct {
    unsigned int signature: 16;
    unsigned int size: 16; 
    Bool friends_only;
-   //char excess[BUF_SIZE - 1]; 
+   //char excess[BUF_SIZE - sizeof(Bool)]; 
 }SeeActivePlayersRequest;
 
 typedef struct {
    unsigned int signature: 16;
    unsigned int size: 16; 
    Bool friends_only;
-   //char excess[BUF_SIZE - 1]; 
+   //char excess[BUF_SIZE - sizeof(Bool)]; 
 }SeeActiveGamesRequest;
 
 typedef struct {
@@ -92,8 +108,13 @@ typedef struct {
    char game_name[BUF_SIZE]; 
 }ObserveRequest;
 
+
+
+/////////////////////////////////////////
+
 typedef struct {
    unsigned int signature: 16;
-   //unsigned int size: 16; 
-   //char excess[BUF_SIZE]; 
-}QuitRequest;
+   unsigned int size: 16; 
+   char player_name[MAX_NAME_SIZE]; 
+   unsigned int TTL;
+}PlayerRequestInfo;

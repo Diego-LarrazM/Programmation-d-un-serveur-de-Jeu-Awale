@@ -1,10 +1,8 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "../network.h"
 #include "client.h"
 #include "awale.h"
-#include "request.h"
 
 static void init(void);
 static void end(void);

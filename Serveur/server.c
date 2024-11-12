@@ -44,8 +44,108 @@ int index_name_player(PlayerInfo players[MAX_PLAYER_COUNT], int currentCount, ch
     return i;
 }
 
-void read_request(){
+
+Bool are_friend(PlayerInfo* player1, PlayerInfo* player2){
+   for (int i = 0; i < player1->friend_count; ++i)
+      if (player1->friends[i] == player2)
+         return true;
+   return false;
+}
+
+
+void tick_TLLs(PlayerInfo player){
    
+}
+
+void read_request(Client *clients, Client client, int actual_clients, const char* req){
+   ClientRequest* request = req;
+
+   switch (request->signature){
+      case LOGOUT: ////
+         break;
+      case PROFILE: ////
+         if(client.player->player_state != IDLE) break;
+         ProfileRequest* profile_req = request;
+         break;
+      case MESSAGE: /**/
+         MessageRequest* message_req = request;
+         if(message_req->player) {
+            SOCKET dest_socket = clients[index_name_client(clients, actual_clients, message_req->player_name)].sock;
+            write_client(dest_socket, message_req->message);
+         }
+         else
+            send_message_to_all_clients(clients, client, actual_clients, message_req->message, 0);
+         break;
+      case CHALLENGE: ////
+         if(client.player->player_state != IDLE) break;
+         
+         client.player->player_state = AWAITING_CHALLENGE;
+         ChallengeRequest* challenge_req = request;
+         int challenged_index = index_name_client(clients, actual_clients, challenge_req->player_name);
+
+         if(challenged_index == actual_clients || clients[challenged_index].player->player_state != IDLE){
+            write_client(client.sock, "Player is not available right now");
+            client.player->player_state = IDLE;
+            break;
+         }
+         // GESTION DU JEU
+
+         
+         break;
+      case PLAY: ////
+         if(client.player->player_state != IDLE) break;
+         PlayRequest* play_req = request;
+         break;
+      case MOVE: ////
+         if(client.player->player_state != IN_GAME) break;
+         MoveRequest* move_req = request;
+         break;
+      case FRIEND: ////
+         FriendRequest* friend_req = request;
+         break;
+      case RESPOND_FRIEND: ////
+         RespondFriendRequest* respond_req = request;
+         break;
+      case ACTIVE_PLAYERS:
+         if(client.player->player_state != IDLE) break;
+         SeeActivePlayersRequest* active_players_req = request;
+         client.player->player_state = LISTENING;
+
+         char ActivePlayerMessage[MAX_NAME_SIZE + sizeof("Ready")];
+
+         if (active_players_req->friends_only){
+            for (int i = 0; i < client.player->friend_count; ++i) {
+               if (client.player->friends[i]->client != NULL)  {
+                  strcpy(ActivePlayerMessage, client.player->friends[i]->name);
+                  strcat(ActivePlayerMessage, client.player->friends[i]->player_state == IDLE ? "Ready" : " -");
+                  write_client(client.sock, client.player->friends[i]->name);
+               }
+            }
+         }
+         else{
+            for (int i = 0; i < actual_clients; ++i) {
+               strcpy(ActivePlayerMessage, clients[i].player->name);
+               strcat(ActivePlayerMessage, clients[i].player->player_state == IDLE ? "Ready" : " -");
+               write_client(client.sock, clients[i].player->name);
+            }
+         }
+         client.player->player_state = IDLE;
+         break;
+      case ACTIVE_GAMES: ////
+         if(client.player->player_state != IDLE) break;
+         SeeActiveGamesRequest* actives_games_req = request;
+         break;
+      case OBSERVE: ////
+         if(client.player->player_state != IDLE) break;
+         ObserveRequest* observe_req = request;
+         break;
+      case QUIT: ////
+         if(client.player->player_state == IDLE) break;
+         break;
+      default:
+         // GESTION ERREUR
+         break;
+   }
 }
 
 
@@ -104,6 +204,12 @@ static void app(void)
             continue;
          }
 
+         /* Max active player count achieved */
+         if(actual_clients == MAX_CLIENTS)
+         {
+            continue;
+         }
+
          /* after connecting the client sends its name */
          if(read_client(csock, buffer) == -1)
          {
@@ -111,48 +217,59 @@ static void app(void)
             continue;
          }
 
-         /* what is the new maximum fd ? */
-         max = csock > max ? csock : max;
-
-         FD_SET(csock, &rdfs);
-
-         Client c = { csock };
+         /* Player connexion */
          PlayerInfo p;
-         p.playerState = IDLE;
-         c.player = &p;
+         p.player_state = IDLE;
+         p.friend_count = 0;
+         
          strncpy(p.name, buffer, MAX_NAME_SIZE - 1);
          strncpy(p.password, buffer, MAX_PASSWORD_SIZE - 1);
 
          int index_player = index_name_player(players, actual_players, p.name);
-         if (index_player == actual_players){ // New Player
+         if (index_player == actual_players && actual_players != MAX_PLAYER_COUNT){ // New Player
             players[actual_players] = p;
             ++actual_players;
          }
-         else if (strcmp(players[index_player].password, p.password) != 0) // Wrong password
-            continue;
+         else {
+            if (strcmp(players[index_player].password, p.password) != 0) // Wrong password
+               continue;
+            else
+               p = players[index_player];
+         }
 
+         Client c = { csock };
+         c.player = &p;
+
+         /* Player already connected ? */
          int index_client = index_name_client(clients, actual_clients, p.name);
-         if (index_client != actual_clients && clients[index_client].player->playerState != DISCONNECTED_FGAME)
+         if (index_client != actual_clients && clients[index_client].player->player_state != DISCONNECTED_FGAME)
             continue;
-         if (index_client == actual_clients) {
+         if (index_client == actual_clients) { // not connected
             clients[actual_clients] = c;
             ++actual_clients;
          }
-         else {
-            clients[actual_clients].player->playerState = IN_GAME;
+         else { // was in game and disconnected forcibly
+            clients[actual_clients].player->player_state = IN_GAME;
          }
-         //////////////////////////////////////////////////////////////////////////////////// CONNECTING CLIENT
+
+         /* what is the new maximum fd ? */
+         max = csock > max ? csock : max;
+
+         FD_SET(csock, &rdfs);
       }
       else
       {
          int i = 0;
          for(i = 0; i < actual_clients; i++)
          {
+            /*Timeouts */
+            tick_TLLs(clients[i].player);
+            
             /* a client is talking */
             if(FD_ISSET(clients[i].sock, &rdfs))
             {
                Client client = clients[i];
-               int c = read_client(clients[i].sock, buffer);r
+               int c = read_client(clients[i].sock, buffer);
                /* client disconnected */
                if(c == 0)
                {
@@ -165,7 +282,7 @@ static void app(void)
                else
                {
                   //send_message_to_all_clients(clients, client, actual_clients, buffer, 0);
-                  read_request(client, buffer, c)
+                  read_request(clients, client, actual_clients, buffer);
                }
                break;
             }
