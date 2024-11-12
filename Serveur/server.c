@@ -26,15 +26,40 @@ static void end(void)
 #endif
 }
 
+
+int index_name_client(Client clients[MAX_CLIENTS], int currentCount, char name[MAX_NAME_SIZE]) {
+    int i;
+    for (i = 0; i < currentCount; i++)
+        if (strcmp(clients[i].player->name, name) == 0)
+            break;
+    return i;
+}
+
+
+int index_name_player(PlayerInfo players[MAX_PLAYER_COUNT], int currentCount, char name[MAX_NAME_SIZE]) {
+    int i;
+    for (i = 0; i < currentCount; i++)
+        if (strcmp(players[i].name, name) == 0)
+            break;
+    return i;
+}
+
+void read_request(){
+   
+}
+
+
 static void app(void)
 {
    SOCKET sock = init_connection();
    char buffer[BUF_SIZE];
    /* the index for the array */
-   int actual = 0;
+   int actual_clients = 0;
+   int actual_players = 0;
    int max = sock;
    /* an array for all clients */
    Client clients[MAX_CLIENTS];
+   PlayerInfo players[MAX_PLAYER_COUNT];
 
    fd_set rdfs;
 
@@ -50,7 +75,7 @@ static void app(void)
       FD_SET(sock, &rdfs);
 
       /* add socket of each client */
-      for(i = 0; i < actual; i++)
+      for(i = 0; i < actual_clients; i++)
       {
          FD_SET(clients[i].sock, &rdfs);
       }
@@ -92,32 +117,63 @@ static void app(void)
          FD_SET(csock, &rdfs);
 
          Client c = { csock };
-         strncpy(c.name, buffer, BUF_SIZE - 1);
-         clients[actual] = c;
-         actual++;
+         PlayerInfo p;
+         c.player = &p;
+         strncpy(p.name, buffer, MAX_NAME_SIZE - 1);
+         strncpy(p.password, buffer, MAX_PASSWORD_SIZE - 1);
+
+         int index_player = index_name_player(players, actual_players, p.name);
+         if (index_player == actual_players){
+            players[actual_players] = p;
+            ++actual_players;
+         }
+         else {
+            if (strcmp(players[index_player].password, p.password) == 0){
+               ///////////////////////// AJOUTER A LA LISTE DES CLIENTS ///////////////////////////////////////////////////
+            }
+         }
+
+         int index = index_name_client(clients, actual_clients, c.name);
+         if (index != actual_clients && clients[index].playerState != DISCONNECTED_FGAME)
+            continue;
+         if (index == actual_clients) {
+            clients[actual_clients] = c;
+            actual_clients++;
+         }
+         else {
+            clients[index].playerState = IN_GAME;
+         }
+
+
+
+
+
+
+         //////////////////////////////////////////////////////////////////////////////////// CONNECTING CLIENT
       }
       else
       {
          int i = 0;
-         for(i = 0; i < actual; i++)
+         for(i = 0; i < actual_clients; i++)
          {
             /* a client is talking */
             if(FD_ISSET(clients[i].sock, &rdfs))
             {
                Client client = clients[i];
-               int c = read_client(clients[i].sock, buffer);
+               int c = read_client(clients[i].sock, buffer);r
                /* client disconnected */
                if(c == 0)
                {
                   closesocket(clients[i].sock);
-                  remove_client(clients, i, &actual);
+                  remove_client(clients, i, &actual_clients);
                   strncpy(buffer, client.name, BUF_SIZE - 1);
                   strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
-                  send_message_to_all_clients(clients, client, actual, buffer, 1);
+                  send_message_to_all_clients(clients, client, actual_clients, buffer, 1);
                }
                else
                {
-                  send_message_to_all_clients(clients, client, actual, buffer, 0);
+                  //send_message_to_all_clients(clients, client, actual_clients, buffer, 0);
+                  read_request(client, buffer, c)
                }
                break;
             }
@@ -125,33 +181,33 @@ static void app(void)
       }
    }
 
-   clear_clients(clients, actual);
+   clear_clients(clients, actual_clients);
    end_connection(sock);
 }
 
-static void clear_clients(Client *clients, int actual)
+static void clear_clients(Client *clients, int actual_clients)
 {
    int i = 0;
-   for(i = 0; i < actual; i++)
+   for(i = 0; i < actual_clients; i++)
    {
       closesocket(clients[i].sock);
    }
 }
 
-static void remove_client(Client *clients, int to_remove, int *actual)
+static void remove_client(Client *clients, int to_remove, int *actual_clients)
 {
    /* we remove the client in the array */
-   memmove(clients + to_remove, clients + to_remove + 1, (*actual - to_remove - 1) * sizeof(Client));
+   memmove(clients + to_remove, clients + to_remove + 1, (*actual_clients - to_remove - 1) * sizeof(Client));
    /* number client - 1 */
-   (*actual)--;
+   (*actual_clients)--;
 }
 
-static void send_message_to_all_clients(Client *clients, Client sender, int actual, const char *buffer, char from_server)
+static void send_message_to_all_clients(Client *clients, Client sender, int actual_clients, const char *buffer, char from_server)
 {
    int i = 0;
    char message[BUF_SIZE];
    message[0] = 0;
-   for(i = 0; i < actual; i++)
+   for(i = 0; i < actual_clients; i++)
    {
       /* we don't send message to the sender */
       if(sender.sock != clients[i].sock)

@@ -12,9 +12,8 @@
 #define false 0
 #define true 1
 
-
+typedef unsigned int NumCase;
 typedef unsigned char Graines;
-typedef unsigned char NumCase;
 typedef unsigned char Bool;
 typedef unsigned char BitField_1o; /* Bitfield d'un octet où les bits de 1 à 6 correspondent aux cases 7-12(Joueur1) ou 1-6 (Joueur2 respectivement)
 JOUEUR2(case)  :  6  5  4  3  2  1
@@ -39,8 +38,8 @@ void end(Plateau* p);
 
 BitField_1o playableFamine(Plateau* p);
 
-Bool play(Plateau* p, NumCase num_case);
-Bool cantPlay(Plateau* p, NumCase num_case);
+Bool play(Plateau* p, NumCase num_case, BitField_1o casesJouables);
+Bool cantPlay(Plateau* p, NumCase num_case, BitField_1o casesJouables);
 void gererDepassementPlateau(NumCase* num_case);
 NumCase semerGraines(Plateau* p, NumCase num_case);
 BitField_1o trouverCasesConquises(Plateau* p, NumCase num_case);

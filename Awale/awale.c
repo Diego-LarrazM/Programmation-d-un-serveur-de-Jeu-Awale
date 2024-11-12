@@ -4,7 +4,9 @@
 
 Plateau* init(){
     Plateau* p = (Plateau*)malloc(sizeof(Plateau));
-    for(int i = 0; i < NB_CASES; ++i) p->cases[i] = 4;
+    //for(int i = 0; i < NB_CASES; ++i) p->cases[i] = 4;
+    p->cases[0] = 1; p->cases[2] = 10; p->cases[3] = 2; p->cases[5] = 1;
+
     p->grainesJ1 = p->grainesJ2 = 0;
 
 
@@ -22,6 +24,7 @@ void end(Plateau* p){
     free(p);
 }
 
+
 void changePlayer(Plateau* p){
     switch(p->JoueurCourant){
     case JOUEUR1:
@@ -33,8 +36,9 @@ void changePlayer(Plateau* p){
     }
 }
 
-Bool play(Plateau* p, NumCase num_case){
-    if(cantPlay(p, num_case)) return false;
+
+Bool play(Plateau* p, NumCase num_case, BitField_1o casesJouables){
+    if(cantPlay(p, num_case, BitField_1o casesJouables)) return false;
     NumCase caseArret = semerGraines(p, num_case);
     BitField_1o casesConquises = trouverCasesConquises(p, caseArret);
     if (casesConquises != 63) // casesConquises == 11111111 soit toutes les cases énemies sont conquises
@@ -42,20 +46,24 @@ Bool play(Plateau* p, NumCase num_case){
     return true;
 }
 
-Bool cantPlay(Plateau* p, NumCase num_case){
-	  if (p->JoueurCourant == JOUEUR1 && (num_case < 6 || num_case > 11))
+
+Bool cantPlay(Plateau* p, NumCase num_case, BitField_1o casesJouables){
+	if (p->JoueurCourant == JOUEUR1 && (num_case < 6 || num_case > 11))
         return true;
     if (p->JoueurCourant == JOUEUR2 && num_case > 5)
         return true;
     if (p->cases[num_case] == 0)
         return true;
-    return false;
+    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6;
+    if (casesJouables & (1 << (num_case - offset)))
+        return false;
+    return true;
 }
 
 
 void gererDepassementPlateau(NumCase* num_case){
     if (*num_case == 12) *num_case = 0; 
-    else if (*num_case > 12) *num_case = 11; // unsigned char => (0 - 1) == (255)
+    else if (*num_case > 12) *num_case = 11; // unsigned int => (0 - 1) == (MAX_UINT)
 }
 
 
@@ -88,6 +96,7 @@ BitField_1o trouverCasesConquises(Plateau* p, NumCase num_case){
     return caseConquise;
 }  
 
+
 void recolterConquetes(Plateau* p, BitField_1o casesConquises){
     NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
     for(NumCase i = 0; i < 6 && casesConquises; ++i, casesConquises >>= 1){
@@ -100,8 +109,6 @@ void recolterConquetes(Plateau* p, BitField_1o casesConquises){
 	}
     }
 }
-
- 
 
 
 Bool hasWon(Plateau* p){
@@ -126,6 +133,7 @@ Bool isOpponentFamished(Plateau* p){
     return true;
 }
 
+
 BitField_1o playableFamine(Plateau* p){
     BitField_1o casesAutorise = 0; // les bits de 1 à 6 indiquent si les cases 1-6(Joueur1) ou 7-12 (Joueur2) sont jouables (égal à 1).
     int ajout = 1;
@@ -136,10 +144,9 @@ BitField_1o playableFamine(Plateau* p){
         Cas Horaire  : p->cases[i] >= 6 - (i - offset)
         Cas Ahoraire : p->cases[i] >= 1 + (i - offset)
         */
-        if(p->cases[i] >= (((int)(p->sensJeu) == HORAIRE ? 6:1) - (int)(p->sensJeu) * (i - offset))){
+        if(p->cases[i] >= (((int)(p->sensJeu) == HORAIRE ? 6:1) - (int)(p->sensJeu) * (i - offset)))
             casesAutorise |= ajout; 
-            ajout <<= 1;
-        }
+        ajout <<= 1;
     }
     return casesAutorise;
 }
@@ -211,4 +218,3 @@ void printBoard(Plateau* p, char* buffer){
         exit(errno);
     }
 }
-
