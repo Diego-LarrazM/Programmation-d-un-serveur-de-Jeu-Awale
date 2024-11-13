@@ -28,7 +28,7 @@ int main(){
   char boardStr[300];
   NumCase caseAJouer;
   BitField_1o casesJouables;
-  Plateau* plateauJeu = init();
+  Plateau* plateauJeu = initGame();
   while(!(hasWon(plateauJeu) || isDraw(plateauJeu))){
     casesJouables = isOpponentFamished(plateauJeu) ? playableFamine(plateauJeu) : 63;
     bitfieldToString(plateauJeu->JoueurCourant, casesJouables, casesJouablesStr);
@@ -44,5 +44,6 @@ int main(){
     changePlayer(plateauJeu);
   }
   printBoard(plateauJeu, boardStr);
+  endGame(plateauJeu);
   return 0;
   }

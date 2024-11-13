@@ -2,7 +2,7 @@
 #define SERVER_H
 
 #include "client.h"
-#include "awale.h"
+#include "../Awale/awale.h"
 
 static void init(void);
 static void end(void);
@@ -17,5 +17,7 @@ static void clear_clients(Client *clients, int actual);
 
 int index_name_client(Client clients[MAX_CLIENTS], int currentCount, char name[MAX_NAME_SIZE]);
 int index_name_player(PlayerInfo players[MAX_PLAYER_COUNT], int currentCount, char name[MAX_NAME_SIZE]);
+
+void tick_TLLs(PlayerInfo* player);
 
 #endif /* guard */

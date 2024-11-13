@@ -1,4 +1,5 @@
 #include "client.h"
+#include "../stdvars.h"
 
 #define LOGOUT 0
 #define PROFILE 1

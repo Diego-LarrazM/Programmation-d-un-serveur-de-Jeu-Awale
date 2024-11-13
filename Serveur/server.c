@@ -53,7 +53,7 @@ Bool are_friend(PlayerInfo* player1, PlayerInfo* player2){
 }
 
 
-void tick_TLLs(PlayerInfo player){
+void tick_TLLs(PlayerInfo* player){
    
 }
 
@@ -275,7 +275,7 @@ static void app(void)
                {
                   closesocket(clients[i].sock);
                   remove_client(clients, i, &actual_clients);
-                  strncpy(buffer, client.name, BUF_SIZE - 1);
+                  strncpy(buffer, client.player->name, BUF_SIZE - 1);
                   strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
                   send_message_to_all_clients(clients, client, actual_clients, buffer, 1);
                }
@@ -323,7 +323,7 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
       {
          if(from_server == 0)
          {
-            strncpy(message, sender.name, BUF_SIZE - 1);
+            strncpy(message, sender.player->name, BUF_SIZE - 1);
             strncat(message, " : ", sizeof message - strlen(message) - 1);
          }
          strncat(message, buffer, sizeof message - strlen(message) - 1);

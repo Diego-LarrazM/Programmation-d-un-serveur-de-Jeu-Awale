@@ -2,7 +2,7 @@
 
 
 
-Plateau* init(){
+Plateau* initGame(){
     Plateau* p = (Plateau*)malloc(sizeof(Plateau));
     //for(int i = 0; i < NB_CASES; ++i) p->cases[i] = 4;
     p->cases[0] = 1; p->cases[2] = 10; p->cases[3] = 2; p->cases[5] = 1;
@@ -20,7 +20,7 @@ Plateau* init(){
 }
 
 
-void end(Plateau* p){
+void endGame(Plateau* p){
     free(p);
 }
 
@@ -38,7 +38,7 @@ void changePlayer(Plateau* p){
 
 
 Bool play(Plateau* p, NumCase num_case, BitField_1o casesJouables){
-    if(cantPlay(p, num_case, BitField_1o casesJouables)) return false;
+    if(cantPlay(p, num_case, casesJouables)) return false;
     NumCase caseArret = semerGraines(p, num_case);
     BitField_1o casesConquises = trouverCasesConquises(p, caseArret);
     if (casesConquises != 63) // casesConquises == 11111111 soit toutes les cases énemies sont conquises

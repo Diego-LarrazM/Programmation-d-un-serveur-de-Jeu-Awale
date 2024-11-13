@@ -3,13 +3,9 @@
 
 #include "server.h"
 #include "../network.h"
+#include "../stdvars.h"
 #include "request.h"
 
-#define MAX_NAME_SIZE 50
-#define MAX_PASSWORD_SIZE 50
-#define MAX_BIO_SIZE 50
-#define MAX_PLAYER_COUNT 1024
-#define MAX_REQUEST_SIZE 1024
 
 typedef enum {
 LISTENING = 0, 
@@ -24,8 +20,9 @@ OBSERVING = 6
 } State;
 
 struct struct_Client;
+struct struct_Player;
 
-typedef struct
+typedef struct struct_Player
 {
    char bio[MAX_BIO_SIZE];
    char name[MAX_NAME_SIZE];
@@ -34,7 +31,7 @@ typedef struct
    State player_state;
 
    PlayerRequestInfo requests[100];  // Linked list ?
-   PlayerInfo* friends[MAX_PLAYER_COUNT]; // Linked list ?
+   struct struct_Player* friends[MAX_PLAYER_COUNT]; // Linked list ?
    unsigned int friend_count;
 
    struct struct_Client* client;
