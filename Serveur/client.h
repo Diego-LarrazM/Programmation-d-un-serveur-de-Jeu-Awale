@@ -15,12 +15,13 @@ IDLE = 1,
 CHALLENGING = 2, 
 AWAITING_CHALLENGE = 3, 
 IN_GAME = 4,
-RESPONDING = 5,
+RESPONDING_CHALLENGE = 5,
 OBSERVING = 6
 } State;
 
 struct struct_Client;
 struct struct_Player;
+struct struct_Game;
 
 typedef struct struct_Player
 {
@@ -35,6 +36,8 @@ typedef struct struct_Player
    unsigned int friend_count;
 
    struct struct_Client* client;
+   struct struct_Game* current_game;
+
 }PlayerInfo;
 
 typedef struct struct_Client
@@ -42,5 +45,14 @@ typedef struct struct_Client
    SOCKET sock;
    PlayerInfo* player;
 }Client;
+
+typedef struct struct_Game
+{
+   Plateau* game_board;
+   Client* clients_involved[2];
+   Client* observers[MAX_OBSERVERS];
+   unsigned int nbObservers;
+}Game;
+
 
 #endif /* guard */
