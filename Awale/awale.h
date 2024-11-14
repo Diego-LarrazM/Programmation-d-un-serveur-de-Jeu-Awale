@@ -35,7 +35,7 @@ void endGame(Plateau* p);
 
 BitField_1o playableFamine(Plateau* p);
 
-Bool play(Plateau* p, NumCase num_case, BitField_1o casesJouables);
+Bool play(Plateau* p, NumCase num_case);
 Bool cantPlay(Plateau* p, NumCase num_case, BitField_1o casesJouables);
 void gererDepassementPlateau(NumCase* num_case);
 NumCase semerGraines(Plateau* p, NumCase num_case);
@@ -48,7 +48,7 @@ Bool isOpponentFamished(Plateau* p);
 Bool hasWon(Plateau* p);
 Bool isDraw(Plateau* p);
 
-void printBoard(Plateau* p, char* buffer);
+void printBoard(Plateau* p, Joueur joueur, char* buffer);
 
 
 #endif /* guard */

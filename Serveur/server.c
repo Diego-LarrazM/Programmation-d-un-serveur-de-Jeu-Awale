@@ -45,20 +45,91 @@ Bool accept_challenge(Client* challenged){
    return true;
 }
 
+
+void bitfieldToString(Joueur JCourant, BitField_1o cases, char* buffer){
+  NumCase i = JCourant == JOUEUR2 ? 1 : 7;
+  NumCase j = 0;
+    while(cases){
+      if(cases & 1){
+        if(i >= 10){
+          buffer[j++] = 48 + i/10;
+          buffer[j++] = 48 + i%10;
+          buffer[j++] = ' ';
+        }
+        else{
+          buffer[j++] = 48 + i%10;
+          buffer[j++] = ' ';
+        }
+      }  
+      ++i;
+      cases >>= 1;
+    }
+    buffer[j] = '\0';
+}
+
+
 void continue_game(Game* game){
-   /*TO DO: affichage, indiquer joueur courant, cases joaubles, voir qu igagne et arret etc*/
+   char message[300];
+   printBoard(game->game_board, JOUEUR1, message);
+   write_client(game->clients_involved[0]->sock, message);
+   printBoard(game->game_board, JOUEUR2, message);
+   write_client(game->clients_involved[1]->sock, message);
+   
+   sprintf(message, "Score : %s : %d - %s : %d\n", game->clients_involved[0]->player->name, game->game_board->grainesJ1, game->clients_involved[1]->player->name, game->game_board->grainesJ2);
+   write_client(game->clients_involved[0]->sock, message);
+   write_client(game->clients_involved[1]->sock, message);
+
+   if (hasWon(game->game_board)){
+      sprintf(message, "Le joueur %s a gagné la partie!\n", game->game_board->JoueurCourant == JOUEUR1 ? game->clients_involved[0]->player->name : game->clients_involved[1]->player->name);
+      write_client(game->clients_involved[0]->sock, message);
+      write_client(game->clients_involved[1]->sock, message);
+      end_game(game);
+      return;
+   }
+   if (isDraw(game->game_board)){
+      write_client(game->clients_involved[0]->sock, "Il y a égalité!\n");
+      write_client(game->clients_involved[1]->sock, "Il y a égalité!\n");
+      end_game(game);
+      return;
+   }
+
+   changePlayer(game->game_board);
+
+   sprintf(message, "Au tour de %s\n", game->game_board->JoueurCourant == JOUEUR1 ? game->clients_involved[0]->player->name : game->clients_involved[1]->player->name);
+   write_client(game->clients_involved[0]->sock, message);
+   write_client(game->clients_involved[1]->sock, message);
+
+   BitField_1o casesJouables = isOpponentFamished(game->game_board) ? playableFamine(game->game_board) : 63;
+   char casesJouablesStr[20];
+   bitfieldToString(game->game_board->JoueurCourant, casesJouables, casesJouablesStr);
+   sprintf(message, "Choissisez une case parmis: %s\n", casesJouablesStr);
+
+   /*
+   TO DO LEFT: il manque l'affichage pour les observateurs
+   -> faire fonction pour print un message aux deux joueurs ?
+   -> faire fonction pour print un message aux observeurs ?
+   -> faire fonction pour print un message aux deux joueurs + observeurs ?
+   */
+
+
+   /*TO DO: affichage, indiquer joueur courant, cases jouables, voir qui gagne et arret etc*/
    //players->player_state = LISTENING;
    //players->player_state = IN_GAME;
 }
 
-void make_move(Game* game, NumCase played_house){
+Bool make_move(Game* game, NumCase played_house){
+   return play(game->game_board, played_house);
    /*TO DO: realiser le move indiqué*/
    //players->player_state = LISTENING;
    //players->player_state = IN_GAME;
 }
 
 Bool is_current_player(Game* game, Client* client){
-   /*TO DO: true if current player == client->player*/
+   if (game->game_board->JoueurCourant == JOUEUR1 && game->clients_involved[0] == client)
+      return true;
+   if (game->game_board->JoueurCourant == JOUEUR2 && game->clients_involved[1] == client)
+      return true;
+   return false;
 }
 
 
@@ -78,7 +149,6 @@ void end_game(Game* game){
 }
 
 void cancel_game(Client* client, char* message){
-   client->player->player_state = IDLE;
    write_client(client->sock, message);
    end_game(client->player->current_game);
 }
@@ -159,13 +229,11 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
          write_client(clients[challenged_index].sock, buffer);
 
          create_game(requester, &clients[challenged_index]);
-         if(!fork()){ ////////////////////// ATTENTION ZOMBIE ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         if(!fork()){ ////////////////////// ATTENTION ZOMBIE /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             sleep(30); // Timeout 30s
             if(req_player->player_state == AWAITING_CHALLENGE) 
                cancel_game(requester, "Challenge timeout. Game cancelled.");
          }
-
-         
          break;
 
 
@@ -182,9 +250,14 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
          MoveRequest* move_req = (MoveRequest*) request;
          Game* game = req_player->current_game;
 
-         if(is_current_player(game, requester)) make_move(game, move_req->played_house);
-         else write_client(requester->sock, "Please wait for your turn to play");
-         continue_game(game);
+         if (is_current_player(game, requester)) {
+            if (make_move(game, move_req->played_house))
+               continue_game(game);
+            else
+               write_client(requester->sock, "An uncorrect House has been inputed");
+            }
+         else 
+            write_client(requester->sock, "Please wait for your turn to play");
          break;
 
 

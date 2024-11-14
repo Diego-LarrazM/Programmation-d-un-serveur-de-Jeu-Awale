@@ -37,7 +37,8 @@ void changePlayer(Plateau* p){
 }
 
 
-Bool play(Plateau* p, NumCase num_case, BitField_1o casesJouables){
+Bool play(Plateau* p, NumCase num_case){
+    BitField_1o casesJouables = isOpponentFamished(p) ? playableFamine(p) : 63;
     if(cantPlay(p, num_case, casesJouables)) return false;
     NumCase caseArret = semerGraines(p, num_case);
     BitField_1o casesConquises = trouverCasesConquises(p, caseArret);
@@ -167,8 +168,8 @@ void collectAllPoints(Plateau* p){
 }
 
 
-void printBoard(Plateau* p, char* buffer){
-    switch((int)p->JoueurCourant * (int)p->sensJeu){
+void printBoard(Plateau* p, Joueur joueur, char* buffer){
+    switch((int)joueur * (int)p->sensJeu){
     case (int)JOUEUR1* (int)HORAIRE:
         sprintf(buffer,
             "  ╔01╦02╦03╦04╦05╦06╗\n"
