@@ -476,7 +476,7 @@ static void app(void)
                if(c == 0)
                {
                   closesocket(clients[i].sock);
-                  remove_client(clients, i, &actual_clients);
+                  remove_client(clients, i, &actual_clients); ////////// Remove client from player info
                   strncpy(buffer, client->player->name, BUF_SIZE - 1);
                   strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
                   send_message_to_all_clients(clients, client, actual_clients, buffer, 1);
