@@ -39,9 +39,14 @@ void create_game(Client* client1, Client* client2){
 
 Bool accept_challenge(Client* challenged){
    Game* game = challenged->player->current_game;
-   if(game->clients_involved[0]->player->player_state != AWAITING_CHALLENGE) return false; // Test: Player always ready (not disconected or timeout)
-   game->clients_involved[0]->player->player_state = IN_GAME;
-   game->clients_involved[1]->player->player_state = IN_GAME;
+   PlayerInfo* player1 = game->clients_involved[0]->player;
+   PlayerInfo* player2 = game->clients_involved[1]->player;
+
+   if(player1->player_state != AWAITING_CHALLENGE) return false; // Test: Player always ready (not disconected or timeout)
+   if(strcmp(player2->name, challenged->player->name)) return false; // Test: Challenged player wasn't challenged by this 
+   
+   player1->player_state = IN_GAME;
+   player2->player_state = IN_GAME;
    return true;
 }
 
@@ -80,7 +85,7 @@ void continue_game(Game* game){
    write_client(game->clients_involved[1]->sock, message);
 
    if (hasWon(game->game_board)){
-      sprintf(message, "Le joueur %s a gagné la partie!\n", game->game_board->JoueurCourant == JOUEUR1 ? game->clients_involved[0]->player->name : game->clients_involved[1]->player->name);
+      sprintf(message, "Le joueur %s a gagné la partie!\n",  game->clients_involved[game->game_board->JoueurCourant - 1]->player->name);
       write_client(game->clients_involved[0]->sock, message);
       write_client(game->clients_involved[1]->sock, message);
       end_game(game);
@@ -95,7 +100,7 @@ void continue_game(Game* game){
 
    changePlayer(game->game_board);
 
-   sprintf(message, "Au tour de %s\n", game->game_board->JoueurCourant == JOUEUR1 ? game->clients_involved[0]->player->name : game->clients_involved[1]->player->name);
+   sprintf(message, "Au tour de %s\n",game->clients_involved[game->game_board->JoueurCourant - 1]->player->name);
    write_client(game->clients_involved[0]->sock, message);
    write_client(game->clients_involved[1]->sock, message);
 
@@ -119,17 +124,10 @@ void continue_game(Game* game){
 
 Bool make_move(Game* game, NumCase played_house){
    return play(game->game_board, played_house);
-   /*TO DO: realiser le move indiqué*/
-   //players->player_state = LISTENING;
-   //players->player_state = IN_GAME;
 }
 
 Bool is_current_player(Game* game, Client* client){
-   if (game->game_board->JoueurCourant == JOUEUR1 && game->clients_involved[0] == client)
-      return true;
-   if (game->game_board->JoueurCourant == JOUEUR2 && game->clients_involved[1] == client)
-      return true;
-   return false;
+   return game->clients_involved[game->game_board->JoueurCourant - 1] == client;
 }
 
 
@@ -153,6 +151,14 @@ void cancel_game(Client* client, char* message){
    end_game(client->player->current_game);
 }
 
+void manage_timeout(Client* requester, unsigned int duration, State to_check, char* message){
+   /* TODO resoudre zombie*/
+   if(!fork()){ ////////////////////// ATTENTION ZOMBIE /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      sleep(duration); 
+      if(requester->player->player_state == to_check) 
+         cancel_game(requester, message);
+   }
+}
 
 int index_name_client(Client clients[MAX_CLIENTS], int currentCount, char name[MAX_NAME_SIZE]) {
     int i;
@@ -213,27 +219,24 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
          if(req_player->player_state != IDLE) break;
          req_player->player_state = AWAITING_CHALLENGE;
          ChallengeRequest* challenge_req = (ChallengeRequest*) request;
+         int challenged_index = index_name_client(clients, actual_clients, challenge_req->player_name); // index of challenged player
+         Client* challenged_client = &clients[challenged_index];
 
-         int challenged_index = index_name_client(clients, actual_clients, challenge_req->player_name); // index du joueur qu'on défie
-         if(challenged_index == actual_clients || clients[challenged_index].player->player_state != IDLE){ // s'il n'est pas connecté ou est occupé passer
+         // if not connected or occupied, pass
+         if(challenged_index == actual_clients || challenged_client->player->player_state != IDLE){ 
             write_client(requester->sock, "Player is not available right now");
             req_player->player_state = IDLE;
             break;
          }
 
-         clients[challenged_index].player->player_state = RESPONDING_CHALLENGE;
-
-         // message to indicate the challenged player he's been challenged
+         // we prepare the game and inform the challenged player
+         challenged_client->player->player_state = RESPONDING_CHALLENGE;
          char buffer[BUF_SIZE]; 
          sprintf(buffer, "You have been challenged by %s.\n Type ... to accept or ... to refuse\n", req_player->name); ////////////////////// Commandes à ajouter ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-         write_client(clients[challenged_index].sock, buffer);
+         write_client(challenged_client->sock, buffer);
 
-         create_game(requester, &clients[challenged_index]);
-         if(!fork()){ ////////////////////// ATTENTION ZOMBIE /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            sleep(30); // Timeout 30s
-            if(req_player->player_state == AWAITING_CHALLENGE) 
-               cancel_game(requester, "Challenge timeout. Game cancelled.");
-         }
+         create_game(requester, challenged_client);
+         manage_timeout(requester, 30, AWAITING_CHALLENGE, "Challenge timeout. Game cancelled");
          break;
 
 
@@ -254,7 +257,7 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
             if (make_move(game, move_req->played_house))
                continue_game(game);
             else
-               write_client(requester->sock, "An uncorrect House has been inputed");
+               write_client(requester->sock, "Invalid House has been inputed. Please choose again.");
             }
          else 
             write_client(requester->sock, "Please wait for your turn to play");
