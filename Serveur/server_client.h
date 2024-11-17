@@ -18,7 +18,9 @@ CHALLENGING = 2,
 AWAITING_CHALLENGE = 3, 
 IN_GAME = 4,
 RESPONDING_CHALLENGE = 5,
-OBSERVING = 6
+OBSERVING = 6,
+AWAITING_FRIEND = 7, 
+RESPONDING_FRIEND = 8
 } State;
 
 struct struct_Client;
@@ -34,8 +36,6 @@ typedef struct struct_Player
    State player_state;
    unsigned int observer_index;
 
-   PlayerRequestInfo friend_requests[MAX_FRIEND_REQUEST_SIZE];
-   unsigned int friend_request_count;
    struct struct_Player* friends[MAX_PLAYER_COUNT];
    unsigned int friend_count;
 

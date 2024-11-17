@@ -126,14 +126,3 @@ typedef struct {
    char player_name[MAX_NAME_SIZE]; 
    //char excess[BUF_SIZE - MAX_NAME_SIZE]; 
 }ObserveRequest;
-
-
-
-/////////////////////////////////////////
-
-typedef struct {
-   RequestSignature signature: 16;
-   unsigned int size: 16; 
-   char player_name[MAX_NAME_SIZE]; 
-   unsigned int TTL;
-}PlayerRequestInfo;

@@ -3,6 +3,9 @@
 
 #include "server_client.h"
 
+PlayerInfo players[MAX_PLAYER_COUNT];
+int actual_players = 0; // no database as of now
+
 static void init(void);
 static void end(void);
 static void app(void);
@@ -15,8 +18,10 @@ static void remove_client(Client *clients, int to_remove, int *actual);
 static void clear_clients(Client *clients, int actual);
 
 int index_name_client(Client clients[MAX_CLIENTS], int currentCount, char name[MAX_NAME_SIZE]);
-int index_name_player(PlayerInfo players[MAX_PLAYER_COUNT], int currentCount, char name[MAX_NAME_SIZE]);
+int index_name_player(int currentCount, char name[MAX_NAME_SIZE]);
 Bool are_friend(PlayerInfo* player1, PlayerInfo* player2);
+void add_friend(PlayerInfo* player, Response_Friend* response);
+Bool accept_friend(Client *responder);
 
 void read_request(Client* clients, Client* requester, int actual_clients, const char* req);
 

@@ -214,6 +214,18 @@ void print_board_to(Joueur dest, Game *game, unsigned int ob_ind)
 // #endregion
 
 // #region ////////////////////////////////////// - Client/Player Management - ////////////////////////////////////////////
+
+// #region Friends
+void add_friend(PlayerInfo* player, Response_Friend* response){
+   player->friends[player->friend_count++] = &players[index_name_player(response->player_name, actual_players)];
+}
+
+Bool accept_friend(Client *responder)
+{
+ // TO DO (se baser sur accept challenge)
+}
+// #endregion
+
 void manage_timeout(Client *requester, unsigned int duration, State to_check, char *message)
 {
    /* TODO resoudre zombie*/
@@ -234,7 +246,7 @@ int index_name_client(Client clients[MAX_CLIENTS], int currentCount, char name[M
    return i;
 }
 
-int index_name_player(PlayerInfo players[MAX_PLAYER_COUNT], int currentCount, char name[MAX_NAME_SIZE])
+int index_name_player(int currentCount, char name[MAX_NAME_SIZE])
 {
    int i;
    for (i = 0; i < currentCount; i++)
@@ -443,19 +455,39 @@ void read_request(Client *clients, Client *requester, int actual_clients, const 
       break;
    // #endregion
 
-   // #region FRIEND //WIP//
+   // #region FRIEND //WIP: way to remember friend request like game//
    case FRIEND: 
       FriendRequest *friend_req = (FriendRequest *)request;
-      req_player->player_state = LISTENING;
+      req_player->player_state = AWAITING_FRIEND;
       // test not already friend and exists
       // Tests
+      unsigned int to_friend_player_index = index_name_client(clients, actual_clients, friend_req->player_name);
       Bool client_not_exists = challenged_index == actual_clients;
+      Bool client_occupied = challenged_client->player->player_state != IDLE;
+      if(client_not_exists || client_occupied)
+      {
+         write_client(requester->sock, "Error. Player doesn't exist, not connected or occupied.");
+         req_player->player_state = requester_state; // stops listening
+         break;
+      }
+      if(are_friend(req_player, &players[to_friend_player_index]))
+         write_client(requester->sock, "Error. You are already friends with this player.");
+      else
+      {
+         players[to_friend_player_index].player_state = RESPONDING_FRIEND;
+         char friend_request_msg[MAX_NAME_SIZE + 100];
+         strcpy(friend_request_msg, req_player->name);
+         strcat(friend_request_msg, " wants to be friends... (accept or deny ?)");
+         write_client(players[to_friend_player_index].client->sock, friend_request_msg);  
+
+         write_client(requester->sock, "Sent friend request."); 
+      }
 
       req_player->player_state = requester_state; // stops listening
       break;
    // #endregion
 
-   // #region RESPOND //WIP//
+   // #region RESPOND //WIP: way to remember friend request like game and add_friend()//
    case RESPOND: 
       Response *response = (Response *)request;
       req_player->player_state = LISTENING;
@@ -470,13 +502,15 @@ void read_request(Client *clients, Client *requester, int actual_clients, const 
          break;
 
       case FRIEND_RESPOND:
+         Response_Friend *resp_friend = (Response_Friend *)response;
+         if (resp_friend->validation && accept_friend(requester)) add_friend(...);
          break;
       }
       req_player->player_state = requester_state; // stops listening
       break;
    // #endregion
 
-   // #region ACTIVE_PLAYERS
+   // #region ACTIVE_PLAYERS //WIP : test_privacy takes in account 1 player but not friend w both//
    case ACTIVE_PLAYERS:
       if (requester_state != IDLE)
          break;
@@ -511,7 +545,7 @@ void read_request(Client *clients, Client *requester, int actual_clients, const 
       break;
    // #endregion
 
-   // #region ACTIVE_GAMES
+   // #region ACTIVE_GAMES //WIP : test_privacy takes in account 1 player but not friend w both//
    case ACTIVE_GAMES: 
       if (req_player->player_state != IDLE)
          break;
@@ -550,7 +584,7 @@ void read_request(Client *clients, Client *requester, int actual_clients, const 
       break;
    // #endregion
 
-   // #region OBSERVE
+   // #region OBSERVE //WIP : test_privacy takes in account 1 player but not friend w both//
    case OBSERVE:
       if (req_player->player_state != IDLE)
          break;
@@ -617,11 +651,9 @@ static void app(void)
    char buffer[BUF_SIZE];
    /* the index for the array */
    int actual_clients = 0;
-   int actual_players = 0;
    int max = sock;
    /* an array for all clients */
    Client clients[MAX_CLIENTS];
-   PlayerInfo players[MAX_PLAYER_COUNT];
 
    fd_set rdfs;
 
