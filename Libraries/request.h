@@ -4,7 +4,6 @@
 typedef enum  {LOGOUT = 0, PROFILE = 1, MESSAGE = 2, CHALLENGE = 3, PLAY = 4, MOVE = 5, FRIEND = 6, RESPOND = 7, ACTIVE_PLAYERS = 8, ACTIVE_GAMES = 9, OBSERVE = 10, QUIT = 11} RequestSignature;
 typedef enum  {FRIEND_RESPOND = 0, CHALLENGE_RESPONSE = 1} ResponseType;
 
-
 typedef struct {
    RequestSignature signature: 16;
    unsigned int size: 16; 
