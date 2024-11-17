@@ -327,7 +327,11 @@ static void disconnect_client(Client * client){
       client->player->player_state = DISCONNECTED_FGAME;
       manage_timeout(client, 30, DISCONNECTED_FGAME, "Player disconnected. Game is cancelled", disconnect_players_from_game); // client left as a zombie for 30s
    }
-   else remove_client(index_name_client(client->player->name));
+   else
+   {
+      client->player->client = NULL;
+      remove_client(index_name_client(client->player->name));
+   }
 }
 
 static void clear_clients() ////////////////////////////////////////////////////////////////////////////////////////////// revoir if ingames sauvegarder
