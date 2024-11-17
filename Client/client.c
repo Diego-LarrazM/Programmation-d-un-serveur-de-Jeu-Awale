@@ -25,6 +25,94 @@ static void end(void)
 #endif
 }
 
+
+ClientRequest* create_request(const char* buffer){
+   ClientRequest* request = (ClientRequest*) malloc(sizeof(ClientRequest));
+   char command[50]; // To store the part after '/'
+   char rest[BUF_SIZE - 52];    // To store the part after the first space
+   char *spacePtr;   // Pointer to the first space
+
+   // Check if the input starts with '/'
+   if (buffer[0] == '/') {
+      // Skip the '/' and find the first space
+      spacePtr = strchr(buffer + 1, ' ');
+
+      if (spacePtr != NULL) {
+         // Split the input at the first space
+         *spacePtr = '\0';            // Replace the space with a null terminator
+         strcpy(command, buffer + 1); // Copy the command part
+         strcpy(rest, spacePtr + 1);  // Copy the rest of the string
+      }
+      else {
+         // No space found, so everything after '/' is the command
+         strcpy(command, buffer + 1);
+         rest[0] = '\0'; // Make `rest` an empty string
+      }
+      
+      if (strcmp(command, "help") == 0) {
+         
+         return NULL;
+      }
+      else if (strcmp(command, "?") == 0) {
+         
+         return NULL;
+      }
+      else if (strcmp(command, "logout") == 0) {
+         
+      }
+      else if (strcmp(command, "message") == 0) {
+         
+      }
+      else if (strcmp(command, "challenge") == 0) {
+         
+      }
+      else if (strcmp(command, "play") == 0) {
+         
+      }
+      else if (strcmp(command, "move") == 0) {
+         
+      }
+      else if (strcmp(command, "friend") == 0) {
+         
+      }
+      else if (strcmp(command, "respond") == 0) {
+         
+      }
+      else if (strcmp(command, "who") == 0) { ///////////
+         
+      }
+      else if (strcmp(command, "games") == 0) { //////////
+         
+      }
+      else if (strcmp(command, "observe") == 0) {
+         
+      }
+      else if (strcmp(command, "quit") == 0) {
+         
+      }
+      else {
+         
+         return NULL;
+      }
+
+
+
+   }
+   else {
+      request->signature = MESSAGE;
+      MessageRequest* message_request = (MessageRequest*) request;
+      message_request->player = false;
+      strcpy(message_request->message, rest);
+   }
+   return request;
+}
+
+
+void delete_request(ClientRequest* request){
+
+}
+
+
 static void app(const char *address, const char *name)
 {
    SOCKET sock = init_connection(address);
@@ -68,7 +156,11 @@ static void app(const char *address, const char *name)
                buffer[BUF_SIZE - 1] = 0;
             }
          }
-         write_server(sock, buffer);
+         ClientRequest* request = create_request(buffer);
+         if (request != NULL){
+            write_server(sock, buffer);
+            delete_request(request);
+         }
       }
       else if(FD_ISSET(sock, &rdfs))
       {
@@ -138,9 +230,9 @@ static int read_server(SOCKET sock, char *buffer)
    return n;
 }
 
-static void write_server(SOCKET sock, const char *buffer)
+static void write_server(SOCKET sock, const ClientRequest *request)
 {
-   if(send(sock, buffer, strlen(buffer), 0) < 0)
+   if(send(sock, request, request->size, 0) < 0)
    {
       perror("send()");
       exit(errno);
