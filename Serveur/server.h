@@ -20,12 +20,12 @@ Bool are_friend(PlayerInfo* player1, PlayerInfo* player2);
 
 void read_request(Client* clients, Client* requester, int actual_clients, const char* req);
 
-void tick_TLLs(PlayerInfo* player);
-
 void create_game(Client* client1, Client* client2);
 Bool accept_challenge(Client* challenged);
+Bool add_observer(Game* game, Client* observer);
+Bool remove_observer(Client* observer);
 void bitfieldToString(Joueur JCourant, BitField_1o cases, char* buffer);
-void print_board_to(Joueur dest, Game game, unsigned int ob_ind = 0);
+void print_board_to(Joueur dest, Game* game, unsigned int ob_ind);
 void continue_game(Game* game);
 Bool make_move(Game* game, NumCase played_house);
 Bool is_current_player(Game* game, Client* client);

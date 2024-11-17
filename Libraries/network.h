@@ -38,4 +38,4 @@ typedef struct in_addr IN_ADDR;
 #define MAX_NAME_SIZE 50
 #define MAX_PASSWORD_SIZE 50
 #define MAX_BIO_SIZE 50
-#define MAX_REQUEST_SIZE 1024
+#define MAX_FRIEND_REQUEST_SIZE MAX_PLAYER_COUNT

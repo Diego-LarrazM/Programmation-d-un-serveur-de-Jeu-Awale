@@ -1,19 +1,6 @@
 #include "stdvars.h"
 #include "network.h"
-/*
-#define LOGOUT 0
-#define PROFILE 1
-#define MESSAGE 2
-#define CHALLENGE 3
-#define PLAY 4
-#define MOVE 5
-#define FRIEND 6
-#define RESPOND 7
-#define ACTIVE_PLAYERS 8
-#define ACTIVE_GAMES 9
-#define OBSERVE 10
-#define QUIT 11
-*/
+
 typedef enum  {LOGOUT = 0, PROFILE = 1, MESSAGE = 2, CHALLENGE = 3, PLAY = 4, MOVE = 5, FRIEND = 6, RESPOND = 7, ACTIVE_PLAYERS = 8, ACTIVE_GAMES = 9, OBSERVE = 10, QUIT = 11} RequestSignature;
 typedef enum  {FRIEND_RESPOND = 0, CHALLENGE_RESPONSE = 1} ResponseType;
 

@@ -6,7 +6,9 @@
 #include "../Libraries/request.h"
 #include "../Libraries/Awale/awale.h"
 
+#define NON_OBSERVER (MAX_OBSERVERS + 1)
 
+         
 typedef enum {
 LISTENING = 0, 
 LOGGED_OUT = -2,
@@ -30,9 +32,11 @@ typedef struct struct_Player
    char password[MAX_PASSWORD_SIZE];
 
    State player_state;
+   unsigned int observer_index;
 
-   PlayerRequestInfo requests[100];  // Linked list ?
-   struct struct_Player* friends[MAX_PLAYER_COUNT]; // Linked list ?
+   PlayerRequestInfo friend_requests[MAX_FRIEND_REQUEST_SIZE];
+   unsigned int friend_request_count;
+   struct struct_Player* friends[MAX_PLAYER_COUNT];
    unsigned int friend_count;
 
    struct struct_Client* client;
@@ -48,6 +52,7 @@ typedef struct struct_Client
 
 typedef struct struct_Game
 {
+   Bool private;
    Plateau* game_board;
    Client* clients_involved[2];
    Client* observers[MAX_OBSERVERS];
