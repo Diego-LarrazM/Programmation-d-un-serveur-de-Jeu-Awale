@@ -34,7 +34,7 @@ void create_game(Client* client1, Client* client2){
    game->clients_involved[0] = client1;
    game->clients_involved[1] = client2;
    client1->player->current_game = client2->player->current_game = game;
-   game->nbObservers = 0;
+   game->nb_observers = 0;
 }
 
 Bool accept_challenge(Client* challenged){
@@ -72,20 +72,37 @@ void bitfieldToString(Joueur JCourant, BitField_1o cases, char* buffer){
     buffer[j] = '\0';
 }
 
+void print_board_to(Joueur dest, Game game, unsigned int ob_ind){
+   char buffer[300];
+   if(dest){ // player
+      printBoard(game->game_board, dest, buffer);
+      write_client(game->clients_involved[dest-1]->sock, buffer);
+   }
+   else{ // observer
+      printBoard(game->game_board, game->game_board->joueurCourant, buffer);
+      write_client(game->observers[ob_ind]->sock, buffer);
+   }
+   
+}
+
+
 
 void continue_game(Game* game){
    char message[300];
-   printBoard(game->game_board, JOUEUR1, message);
-   write_client(game->clients_involved[0]->sock, message);
-   printBoard(game->game_board, JOUEUR2, message);
-   write_client(game->clients_involved[1]->sock, message);
-   
+   // Print board and score
    sprintf(message, "Score : %s : %d - %s : %d\n", game->clients_involved[0]->player->name, game->game_board->grainesJ1, game->clients_involved[1]->player->name, game->game_board->grainesJ2);
-   write_client(game->clients_involved[0]->sock, message);
+   write_client(game->clients_involved[0]->sock, message); // show score
    write_client(game->clients_involved[1]->sock, message);
-
+   print_board_to(JOUEUR1, game);
+   print_board_to(JOUEUR2, game);
+   for(int o = 0; o < game->nb_observers; o++){
+      write_client(game->observers[o]->sock, message); 
+      print_board_to(OBSERVATEUR, game, o);
+   }
+   
+   // Test game end
    if (hasWon(game->game_board)){
-      sprintf(message, "Le joueur %s a gagné la partie!\n",  game->clients_involved[game->game_board->JoueurCourant - 1]->player->name);
+      sprintf(message, "Le joueur %s a gagné la partie!\n",  game->clients_involved[game->game_board->joueurCourant - 1]->player->name);
       write_client(game->clients_involved[0]->sock, message);
       write_client(game->clients_involved[1]->sock, message);
       end_game(game);
@@ -97,29 +114,23 @@ void continue_game(Game* game){
       end_game(game);
       return;
    }
-
    changePlayer(game->game_board);
 
-   sprintf(message, "Au tour de %s\n",game->clients_involved[game->game_board->JoueurCourant - 1]->player->name);
+   // print turn
+   sprintf(message, "Au tour de %s\n",game->clients_involved[game->game_board->joueurCourant - 1]->player->name);
    write_client(game->clients_involved[0]->sock, message);
    write_client(game->clients_involved[1]->sock, message);
+   for(int o = 0; o < game->nb_observers; o++){
+      write_client(game->observers[o]->sock, message); 
+      print_board_to(OBSERVATEUR, game, message);
+   }
 
+   // Print possible houses to pick for current player
    BitField_1o casesJouables = isOpponentFamished(game->game_board) ? playableFamine(game->game_board) : 63;
    char casesJouablesStr[20];
-   bitfieldToString(game->game_board->JoueurCourant, casesJouables, casesJouablesStr);
+   bitfieldToString(game->game_board->joueurCourant, casesJouables, casesJouablesStr);
    sprintf(message, "Choissisez une case parmis: %s\n", casesJouablesStr);
-
-   /*
-   TO DO LEFT: il manque l'affichage pour les observateurs
-   -> faire fonction pour print un message aux deux joueurs ?
-   -> faire fonction pour print un message aux observeurs ?
-   -> faire fonction pour print un message aux deux joueurs + observeurs ?
-   */
-
-
-   /*TO DO: affichage, indiquer joueur courant, cases jouables, voir qui gagne et arret etc*/
-   //players->player_state = LISTENING;
-   //players->player_state = IN_GAME;
+   write_client(game->clients_involved[game->game_board->joueurCourant - 1]->sock, message);
 }
 
 Bool make_move(Game* game, NumCase played_house){
@@ -127,7 +138,7 @@ Bool make_move(Game* game, NumCase played_house){
 }
 
 Bool is_current_player(Game* game, Client* client){
-   return game->clients_involved[game->game_board->JoueurCourant - 1] == client;
+   return game->clients_involved[game->game_board->joueurCourant - 1] == client;
 }
 
 
@@ -140,7 +151,7 @@ void end_game(Game* game){
    player2->current_game = NULL;
 
    endGame(game->game_board);
-   for (int i = 0; i < game->nbObservers; ++i){
+   for (int i = 0; i < game->nb_observers; ++i){
       game->observers[i]->player->player_state = IDLE;
    }
    free(game);
@@ -189,6 +200,8 @@ Bool are_friend(PlayerInfo* player1, PlayerInfo* player2){
 void read_request(Client* clients, Client* requester, int actual_clients, const char* req){
    ClientRequest* request = (ClientRequest*)req;
    PlayerInfo* req_player = requester->player; // Player information of the requester
+   State requester_state = req_player->player_state;
+   req_player->player_state = LISTENING;
 
    switch (request->signature){///////////////////////////////////////////////////////////////////////////////////////////ADD LISTENING STATE TO ALL REQUESTS for requester then back
       case LOGOUT: ////
@@ -197,8 +210,9 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
 
 
       case PROFILE: ////
-         if(req_player->player_state != IDLE) break;
+         if(requester_state != IDLE) break;
          ProfileRequest* profile_req = (ProfileRequest*) request;
+         req_player->player_state = requester_state; // stops listening
          break;
 
 
@@ -211,12 +225,13 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
          }
          else
             send_message_to_all_clients(clients, requester, actual_clients, message_req->message, 0);
+         req_player->player_state = requester_state; // stops listening
          break;
 
 
 
       case CHALLENGE: 
-         if(req_player->player_state != IDLE) break;
+         if(requester_state != IDLE) break;
          req_player->player_state = AWAITING_CHALLENGE;
          ChallengeRequest* challenge_req = (ChallengeRequest*) request;
          int challenged_index = index_name_client(clients, actual_clients, challenge_req->player_name); // index of challenged player
@@ -225,7 +240,7 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
          // if not connected or occupied, pass
          if(challenged_index == actual_clients || challenged_client->player->player_state != IDLE){ 
             write_client(requester->sock, "Player is not available right now");
-            req_player->player_state = IDLE;
+            req_player->player_state = IDLE; 
             break;
          }
 
@@ -242,14 +257,14 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
 
 
       case PLAY: ////
-         if(req_player->player_state != IDLE) break;
+         if(requester_state != IDLE) break;
          PlayRequest* play_req = (PlayRequest*) request;
          break;
 
 
 
       case MOVE: ////
-         if(req_player->player_state != IN_GAME) break;
+         if(requester_state != IN_GAME) break;
          MoveRequest* move_req = (MoveRequest*) request;
          Game* game = req_player->current_game;
 
@@ -285,14 +300,14 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
          case FRIEND_RESPOND:
             break;
          }
+         req_player->player_state = requester_state; // stops listening
          break;
 
 
 
-      case ACTIVE_PLAYERS: ////
-         if(req_player->player_state != IDLE) break;
+      case ACTIVE_PLAYERS: //// test privacy
+         if(requester_state != IDLE) break;
          SeeActivePlayersRequest* active_players_req = (SeeActivePlayersRequest*) request;
-         req_player->player_state = LISTENING;
 
          char ActivePlayerMessage[MAX_NAME_SIZE + sizeof("In Game")]; 
 
@@ -312,7 +327,7 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
                write_client(requester->sock, clients[i].player->name);
             }
          }
-         req_player->player_state = IDLE;
+         req_player->player_state = requester_state; // stops listening
          break;
 
 
@@ -324,7 +339,7 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
 
 
 
-      case OBSERVE: ////
+      case OBSERVE: //// test privacy y stop lsitening
          if(req_player->player_state != IDLE) break;
          ObserveRequest* observe_req = (ObserveRequest*) request;
 
@@ -340,6 +355,7 @@ void read_request(Client* clients, Client* requester, int actual_clients, const 
          if(req_player->player_state != OBSERVING) break;
          if(remove_observer(requester)) write_client(requester->sock, "Quited succesfully");
          else write_client(requester->sock, "Error occured when quitting"); //////////////////////////////////////////////////////////////////// Gestion erreurs avec message ???
+         req_player->player_state = requester_state; // stops listening
          break;
 
 

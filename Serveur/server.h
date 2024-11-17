@@ -1,8 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "client.h"
-#include "../Awale/awale.h"
+#include "server_client.h"
 
 static void init(void);
 static void end(void);
@@ -26,6 +25,7 @@ void tick_TLLs(PlayerInfo* player);
 void create_game(Client* client1, Client* client2);
 Bool accept_challenge(Client* challenged);
 void bitfieldToString(Joueur JCourant, BitField_1o cases, char* buffer);
+void print_board_to(Joueur dest, Game game, unsigned int ob_ind = 0);
 void continue_game(Game* game);
 Bool make_move(Game* game, NumCase played_house);
 Bool is_current_player(Game* game, Client* client);

@@ -1,5 +1,5 @@
-#include "client.h"
-#include "../stdvars.h"
+#include "stdvars.h"
+#include "network.h"
 /*
 #define LOGOUT 0
 #define PROFILE 1

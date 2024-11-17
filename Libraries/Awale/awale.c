@@ -15,7 +15,7 @@ Plateau* initGame(){
 
 
     srand( time( NULL ) ); // on choisi un joueur au hasard
-    p->JoueurCourant = rand() % 2 + 1;
+    p->joueurCourant = rand() % 2 + 1;
     return p;
 }
 
@@ -26,12 +26,12 @@ void endGame(Plateau* p){
 
 
 void changePlayer(Plateau* p){
-    switch(p->JoueurCourant){
+    switch(p->joueurCourant){
     case JOUEUR1:
-        p->JoueurCourant = JOUEUR2;
+        p->joueurCourant = JOUEUR2;
         break;
     case JOUEUR2:
-        p->JoueurCourant = JOUEUR1;
+        p->joueurCourant = JOUEUR1;
         break;
     }
 }
@@ -49,13 +49,13 @@ Bool play(Plateau* p, NumCase num_case){
 
 
 Bool cantPlay(Plateau* p, NumCase num_case, BitField_1o casesJouables){
-	if (p->JoueurCourant == JOUEUR1 && (num_case < 6 || num_case > 11))
+	if (p->joueurCourant == JOUEUR1 && (num_case < 6 || num_case > 11))
         return true;
-    if (p->JoueurCourant == JOUEUR2 && num_case > 5)
+    if (p->joueurCourant == JOUEUR2 && num_case > 5)
         return true;
     if (p->cases[num_case] == 0)
         return true;
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6;
+    NumCase offset = p->joueurCourant == JOUEUR2 ? 0 : 6;
     if (casesJouables & (1 << (num_case - offset)))
         return false;
     return true;
@@ -87,9 +87,9 @@ NumCase semerGraines(Plateau* p, NumCase num_case){
 
 BitField_1o trouverCasesConquises(Plateau* p, NumCase num_case){
     BitField_1o caseConquise = 0;
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
+    NumCase offset = p->joueurCourant == JOUEUR2 ? 6 : 0;
     // Tant que dans le camp enemi et qu'il y a 2 ou 3 graines on a conquis
-    while ((p->cases[num_case] == 2 || p->cases[num_case] == 3) && ((p->JoueurCourant == JOUEUR1 && num_case < 6) || (p->JoueurCourant == JOUEUR2 && num_case > 5))){
+    while ((p->cases[num_case] == 2 || p->cases[num_case] == 3) && ((p->joueurCourant == JOUEUR1 && num_case < 6) || (p->joueurCourant == JOUEUR2 && num_case > 5))){
         caseConquise |= (1 << (num_case - offset));
         num_case -= p->sensJeu;
         gererDepassementPlateau(&num_case);
@@ -99,10 +99,10 @@ BitField_1o trouverCasesConquises(Plateau* p, NumCase num_case){
 
 
 void recolterConquetes(Plateau* p, BitField_1o casesConquises){
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
+    NumCase offset = p->joueurCourant == JOUEUR2 ? 6 : 0;
     for(NumCase i = 0; i < 6 && casesConquises; ++i, casesConquises >>= 1){
 	if (casesConquises & 1) {
-            if (p->JoueurCourant == JOUEUR1)  
+            if (p->joueurCourant == JOUEUR1)  
                  p->grainesJ1 += p->cases[i + offset];
             else //JOUEUR2
                  p->grainesJ2 += p->cases[i + offset]; 
@@ -113,8 +113,8 @@ void recolterConquetes(Plateau* p, BitField_1o casesConquises){
 
 
 Bool hasWon(Plateau* p){
-    if(p->JoueurCourant == JOUEUR1  && p->grainesJ1 > 24) return true;
-    if(p->JoueurCourant == JOUEUR2  && p->grainesJ2 > 24) return true;
+    if(p->joueurCourant == JOUEUR1  && p->grainesJ1 > 24) return true;
+    if(p->joueurCourant == JOUEUR2  && p->grainesJ2 > 24) return true;
     return false;
 }
 
@@ -128,7 +128,7 @@ Bool isDraw(Plateau* p){
 
 Bool isOpponentFamished(Plateau* p){
     int i;
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 6 : 0;
+    NumCase offset = p->joueurCourant == JOUEUR2 ? 6 : 0;
     for (i = offset ; i < 6 + offset; ++i)
         if(p->cases[i] != 0) return false;
     return true;
@@ -138,7 +138,7 @@ Bool isOpponentFamished(Plateau* p){
 BitField_1o playableFamine(Plateau* p){
     BitField_1o casesAutorise = 0; // les bits de 1 à 6 indiquent si les cases 1-6(Joueur1) ou 7-12 (Joueur2) sont jouables (égal à 1).
     int ajout = 1;
-    NumCase offset = p->JoueurCourant == JOUEUR2 ? 0 : 6;
+    NumCase offset = p->joueurCourant == JOUEUR2 ? 0 : 6;
 
     for(int i = offset; i < 6 + offset; i++) {
         /*
@@ -154,7 +154,7 @@ BitField_1o playableFamine(Plateau* p){
 
 
 void collectAllPoints(Plateau* p){
-    if(p->JoueurCourant == JOUEUR1)
+    if(p->joueurCourant == JOUEUR1)
         for (int i = 6 ; i < 12; ++i){
             p->grainesJ1 += p->cases[i];
             p->cases[i] = 0;

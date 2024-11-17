@@ -1,10 +1,10 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "server.h"
-#include "../network.h"
-#include "../stdvars.h"
-#include "request.h"
+
+#include "../Libraries/stdvars.h"
+#include "../Libraries/request.h"
+#include "../Libraries/Awale/awale.h"
 
 
 typedef enum {
@@ -51,7 +51,7 @@ typedef struct struct_Game
    Plateau* game_board;
    Client* clients_involved[2];
    Client* observers[MAX_OBSERVERS];
-   unsigned int nbObservers;
+   unsigned int nb_observers;
 }Game;
 
 
