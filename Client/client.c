@@ -282,7 +282,7 @@ static void app(const char *address, const char *name)
          }
          ClientRequest* request = create_request(buffer);
          if (request->size != 0)
-            write_server(sock, buffer);
+            write_server_request(sock, request);
          delete_request(request);
       }
       else if(FD_ISSET(sock, &rdfs))
@@ -353,7 +353,16 @@ static int read_server(SOCKET sock, char *buffer)
    return n;
 }
 
-static void write_server(SOCKET sock, const ClientRequest *request)
+static void write_server(SOCKET sock, const char *buffer)
+{
+   if(send(sock, buffer, strlen(buffer), 0) < 0)
+   {
+      perror("send()");
+      exit(errno);
+   }
+}
+
+static void write_server_request(SOCKET sock, const ClientRequest *request)
 {
    if(send(sock, request, 1024, 0) < 0)
    {

@@ -1,4 +1,4 @@
-#include "awale.h"
+#include "Libraries/Awale/awale.h"
 #include <stdio.h>
 
 void bitfieldToString(Joueur JCourant, BitField_1o cases, char* buffer){

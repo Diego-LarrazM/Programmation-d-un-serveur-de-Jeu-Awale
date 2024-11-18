@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include "server_client.h"
+#include "../Libraries/request.h"
 
 Client clients[MAX_CLIENTS];
 int actual_clients;

@@ -1,9 +1,9 @@
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef SERVER_CLIENT_H
+#define SERVER_CLIENT_H
 
 
 #include "../Libraries/stdvars.h"
-#include "../Libraries/request.h"
+#include "../Libraries/network.h"
 #include "../Libraries/Awale/awale.h"
 
 #define NON_OBSERVER (MAX_OBSERVERS + 1)

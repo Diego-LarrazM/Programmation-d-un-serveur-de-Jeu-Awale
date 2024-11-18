@@ -5,7 +5,6 @@
 #include <unistd.h>
 
 #include "server.h"
-#include "client.h"
 
 static void init(void)
 {
@@ -82,7 +81,7 @@ void cancel_game(Client *client, char *message)
 }
 
 void disconnect_players_from_game(Client * disconnected, char * message){
-   PlayerInfo* activePlayer = disconnected->player->current_game->clients_involved[0] == disconnected ? disconnected->player->current_game->clients_involved[1] : disconnected->player->current_game->clients_involved[0];
+   PlayerInfo* activePlayer = disconnected->player->current_game->clients_involved[0] == disconnected ? disconnected->player->current_game->clients_involved[1]->player : disconnected->player->current_game->clients_involved[0]->player;
    
    end_game(disconnected->player->current_game);
    remove_client(index_name_client(disconnected->player->name));
@@ -137,10 +136,10 @@ void continue_game(Game *game)
    sprintf(message, "Au tour de %s\n", game->clients_involved[game->game_board->joueurCourant - 1]->player->name);
    write_client(game->clients_involved[0]->sock, message);
    write_client(game->clients_involved[1]->sock, message);
-   for (int o = 0; o < game->nb_observers; o++)
+   for (unsigned int o = 0; o < game->nb_observers; o++)
    {
       write_client(game->observers[o]->sock, message);
-      print_board_to(OBSERVATEUR, game, message);
+      print_board_to(OBSERVATEUR, game, o);
    }
 
    // Print possible houses to pick for current player
@@ -435,10 +434,10 @@ void read_request(Client *requester, const char *req)
       Client *challenged_client = &clients[challenged_index];
 
       // Tests
-      Bool client_not_exists = challenged_index == actual_clients;
+      Bool challenged_not_exists = challenged_index == actual_clients;
       Bool challenged_occupied = challenged_client->player->player_state != IDLE;
 
-      if (client_not_exists || challenged_occupied)
+      if (challenged_not_exists || challenged_occupied)
       {
          write_client(requester->sock, "Player is not available right now");
          req_player->player_state = IDLE;
@@ -520,7 +519,7 @@ void read_request(Client *requester, const char *req)
          if (response->validation && accept_challenge(requester))
             continue_game(req_player->current_game);
          else {
-            write_client(requester, "Game is cancelled.");
+            write_client(requester->sock, "Game is cancelled.");
             end_game(requester->player->current_game);
          }
          break;
@@ -531,13 +530,13 @@ void read_request(Client *requester, const char *req)
          requester->player->asking_friends = NULL;
          if (response->validation) {
             if (requester->player->friend_count >= MAX_FRIEND_COUNT || askingPlayer->friend_count >= MAX_FRIEND_COUNT) {
-               write_client(requester, "Max friend count achieved.");
-               write_client(askingPlayer->client, "Max friend count achieved.");
+               write_client(requester->sock, "Max friend count achieved.");
+               write_client(askingPlayer->client->sock, "Max friend count achieved.");
                break;
             }
             if (!are_friend(requester->player, askingPlayer)){
-               write_client(requester, "You are already friends.");
-               write_client(askingPlayer->client, "You are already friends.");
+               write_client(requester->sock, "You are already friends.");
+               write_client(askingPlayer->client->sock, "You are already friends.");
                break;
             }
             add_friend(requester->player, askingPlayer);

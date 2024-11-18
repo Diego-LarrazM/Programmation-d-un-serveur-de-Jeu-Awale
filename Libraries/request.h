@@ -1,3 +1,6 @@
+#ifndef REQUEST_H
+#define REQUEST_H
+
 #include "stdvars.h"
 #include "network.h"
 
@@ -108,3 +111,6 @@ typedef struct {
    char player_name[MAX_NAME_SIZE]; 
    //char excess[BUF_SIZE - MAX_NAME_SIZE]; 
 }ObserveRequest;
+
+
+#endif /* guard */
