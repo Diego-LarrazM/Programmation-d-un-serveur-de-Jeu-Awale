@@ -82,27 +82,10 @@ Response Types:
 typedef struct {
    RequestSignature signature: 16;
    unsigned int size: 16; 
-   ResponseType response_type;
+   //ResponseType response_type;
    Bool validation;
    //char excess[BUF_SIZE - sizeof(Bool) - sizeof(ResponseType)]; 
 }Response;
-
-typedef struct {
-   RequestSignature signature: 16;
-   unsigned int size: 16; 
-   ResponseType response_type;
-   Bool validation;
-   char player_name[MAX_NAME_SIZE];
-   //char excess[BUF_SIZE - sizeof(Bool) - sizeof(ResponseType) - MAX_NAME_SIZE]; 
-}Response_Friend;
-
-typedef struct {
-   RequestSignature signature: 16;
-   unsigned int size: 16; 
-   ResponseType response_type;
-   Bool validation;
-   //char excess[BUF_SIZE - sizeof(Bool) - sizeof(ResponseType)]; 
-}Response_Challenge;
 
 //////////////////////////////////////////////////////////
 typedef struct {

@@ -38,6 +38,7 @@ typedef struct struct_Player
 
    struct struct_Player* friends[MAX_PLAYER_COUNT];
    unsigned int friend_count;
+   struct struct_Player* asking_friends;
 
    struct struct_Client* client;
    struct struct_Game* current_game;

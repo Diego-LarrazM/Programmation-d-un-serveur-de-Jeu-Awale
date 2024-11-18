@@ -21,15 +21,14 @@ static void remove_client(int to_remove);
 static void clear_clients();
 void manage_timeout(Client *client, unsigned int duration, State to_check, char *message,  void (*action)(Client *, char *));
 
-int index_name_client(Client clients[MAX_CLIENTS], int currentCount, char name[MAX_NAME_SIZE]);
-int index_name_player(int currentCount, char name[MAX_NAME_SIZE]);
+int index_name_client(char name[MAX_NAME_SIZE]);
+int index_name_player(char name[MAX_NAME_SIZE]);
 Bool are_friend(PlayerInfo* player1, PlayerInfo* player2);
-void add_friend(PlayerInfo* player, Response_Friend* response);
-Bool accept_friend(Client *responder);
+void add_friend(PlayerInfo* player1, PlayerInfo* player2);
 
-void read_request(Client* requester, const char* req);
+void read_request(Client *requester, const char *req);
 
-void create_game(Client* client1, Client* client2);
+void create_game(Client *client1, Client *client2, Bool private);
 Bool accept_challenge(Client* challenged);
 Bool add_observer(Game* game, Client* observer);
 Bool remove_observer(Client* observer);

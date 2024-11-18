@@ -28,6 +28,7 @@ static void end(void)
 
 ClientRequest* create_request(const char* buffer){
    ClientRequest* request = (ClientRequest*) malloc(sizeof(ClientRequest));
+   request->size = 0;
    char command[50]; // To store the part after '/'
    char rest[BUF_SIZE - 52];    // To store the part after the first space
    char *spacePtr;   // Pointer to the first space
@@ -49,67 +50,190 @@ ClientRequest* create_request(const char* buffer){
          rest[0] = '\0'; // Make `rest` an empty string
       }
       
-      if (strcmp(command, "help") == 0) {
-         
-         return NULL;
-      }
-      else if (strcmp(command, "?") == 0) {
-         
-         return NULL;
+      if (strcmp(command, "help") == 0 || strcmp(command, "?") == 0) {
+         printf("/logout                              : to quit the server\n");
+         printf("/msg <player-name> <message-content> : to send a private message\n");
+         printf("/challenge <player-name>             : to challenge a friend\n");
+         printf("/play [online, private]              : to play against a bot or a player, privately or not\n");
+         printf("/move <house-number>                 : to choose a move to play\n");
+         printf("/friend <player-name>                : to add a friend\n");
+         printf("/accept                              : to accept a request\n");
+         printf("/decline                             : to decline a request\n");
+         printf("/who [friend]                        : to see all online players or only you friends\n");
+         printf("/games [friend]                      : to see all active games or only your friend's games\n");
+         printf("/observe <player-name>               : to observe a friend's game\n");
+         printf("/quit                                : to quit observing a game\n");
       }
       else if (strcmp(command, "logout") == 0) {
-         
+         request->signature = LOGOUT;
+         request->size = 2 + 2;
       }
-      else if (strcmp(command, "message") == 0) {
-         
+      else if (strcmp(command, "msg") == 0) {
+         if (rest[0] == '\0'){
+            printf("To use the /msg command, you need to indicate the player name then the message you want to send.\n/msg <player-name> <message-content>\n");
+            return request;
+         }
+         char *sSpacePtr = strchr(spacePtr + 1, ' ');
+         if (sSpacePtr == NULL) {
+            printf("To use the /msg command, you need to indicate the player name then the message you want to send.\n/msg <player-name> <message-content>\n");
+            return request;
+         }
+         char msg[BUF_SIZE - 52];
+         *sSpacePtr = '\0';
+         strcpy(msg, sSpacePtr + 1);
+         if (msg[0] == '\0') {
+            printf("To use the /msg command, you need to indicate the player name then the message you want to send.\n/msg <player-name> <message-content>\n");
+            return request;   
+         }
+         request->signature = MESSAGE;
+         MessageRequest *message_request = (MessageRequest *)request;
+         message_request->player = true;
+         strcpy(message_request->player_name, rest);
+         strcpy(message_request->message, msg);
+         message_request->size = 2 + 2 + 1 + MAX_NAME_SIZE + strlen(msg);
       }
       else if (strcmp(command, "challenge") == 0) {
-         
+         if (rest[0] == '\0'){
+            printf("To use the /challenge command, you need to indicate the name of the player that you want to challenge, and then indicate if you want to have this game private (only friends can observe).\n/challenge <player-name> [private]\n");
+            return request;
+         }
+         char *sSpacePtr = strchr(spacePtr + 1, ' ');
+         char private[BUF_SIZE - 53];
+         if (sSpacePtr != NULL) {
+            *sSpacePtr = '\0';
+            strcpy(private, sSpacePtr + 1);
+         }
+         request->signature = CHALLENGE;
+         ChallengeRequest *challenge_request = (ChallengeRequest *)request;
+         if (sSpacePtr != NULL && strcmp(private, "private") == 0)
+            challenge_request->private = true;
+         else if (sSpacePtr == NULL || private[0] == '\0')
+            challenge_request->private = false;
+         else {
+            printf("To use the /challenge command, you need to indicate the name of the player that you want to challenge, and then indicate if you want to have this game private (only friends can observe).\n/challenge <player-name> [private]\n");
+            return request;
+         }
+         strcpy(challenge_request->player_name, rest);
+         challenge_request->size = 2 + 2 + 1 + MAX_NAME_SIZE;
       }
       else if (strcmp(command, "play") == 0) {
-         
+         request->signature = PLAY;
+         PlayRequest* play_request = (PlayRequest*) request;
+         play_request->online = false;
+         play_request->private = false;
+         char *sSpacePtr = strchr(spacePtr + 1, ' ');
+         if (sSpacePtr != NULL) {
+            *sSpacePtr = '\0';
+            char param[BUF_SIZE - 6];
+            strcpy(param, sSpacePtr + 1);
+            if (strcmp(param, "private") == 0)
+               play_request->private = true;
+            else if (strcmp(param, "online") == 0)
+               play_request->online = true;
+            else if (param[0] != '\0') {
+               printf("To use the /play command, you need to indicate if you to play offline (with a bot) or on online, and if you want to have the game in private (they must be seperated with a space bar).\n/play [online, private]\n");
+               return request;
+            }
+         }
+         if (strcmp(rest, "private") == 0)
+            play_request->private = true;
+         else if (strcmp(rest, "online") == 0)
+            play_request->online = true;
+         else {
+            printf("To use the /play command, you need to indicate if you to play offline (with a bot) or on online, and if you want to have the game in private (they must be seperated with a space bar).\n/play [online, private]\n");
+            return request;
+         }
+         play_request->size = 2 + 2 + 1 + 1;
       }
       else if (strcmp(command, "move") == 0) {
-         
+         request->signature = MOVE;
+         NumCase numero = atoi(rest);
+         if (numero == 0) {
+            printf("To use the /move command, you need to indicate the number of the house you want to play.\n/move <house-number>\n");
+            return request;
+         }
+         MoveRequest* move_request = (MoveRequest*) request;
+         move_request->played_house = numero;
+         move_request->size = 2 + 2 + 4;
       }
       else if (strcmp(command, "friend") == 0) {
-         
+         if (rest[0] == '\0'){
+            printf("To use the /friend command, you need to indicate the player name you want to befriend with.\n/friend <player-name>\n");
+            return request;
+         }
+         request->signature = FRIEND;
+         FriendRequest* friend_request = (FriendRequest*)request;
+         strcpy(friend_request->player_name, rest);
+         friend_request->size = 2 + 2 + MAX_NAME_SIZE;
       }
-      else if (strcmp(command, "respond") == 0) {
-         
+      else if (strcmp(command, "accept") == 0) {
+      request->signature = RESPOND;
+      Response* response_request = (Response*) request;
+      response_request->validation = true;
+      request->size = 2 + 2 + 1;
+      }
+      else if (strcmp(command, "decline") == 0) {
+      request->signature = RESPOND;
+      Response* response_request = (Response*) request;
+      response_request->validation = false;
+      request->size = 2 + 2 + 1;
       }
       else if (strcmp(command, "who") == 0) { ///////////
-         
+         request->signature = ACTIVE_PLAYERS;
+         SeeActivePlayersRequest* player_request = (SeeActivePlayersRequest*) request;
+         if (strcmp(rest, "friend") == 0)
+            player_request->friends_only = true;
+         else if (rest[0] == '\0')
+            player_request->friends_only = false;
+         else {
+            printf("To use the /who command, you need to indicate if you want to see only your active friend or all active player.\n/who [friend]\n");
+            return request;
+         }
+         request->size = 2 + 2 + 1;
       }
       else if (strcmp(command, "games") == 0) { //////////
-         
+         request->signature = ACTIVE_GAMES;
+         SeeActiveGamesRequest* games_request = (SeeActiveGamesRequest*) request;
+         if (strcmp(rest, "friend") == 0)
+            games_request->friends_only = true;
+         else if (rest[0] == '\0')
+            games_request->friends_only = false;
+         else {
+            printf("To use the /games command, you need to indicate if you want to see only active games that your friends are playing.\n/games [friend]\n");
+            return request;
+         }
+         request->size = 2 + 2 + 1;
       }
       else if (strcmp(command, "observe") == 0) {
-         
+         if (rest[0] == '\0'){
+            printf("To use the /observe command, you need to indicate the name of the player that you want to watch its game.\n/observe <player-name>\n");
+            return request;
+         }
+         request->signature = OBSERVE;
+         ObserveRequest* observe_request = (ObserveRequest*)request;
+         strcpy(observe_request->player_name, rest);
+         observe_request->size = 2 + 2 + MAX_NAME_SIZE;
       }
       else if (strcmp(command, "quit") == 0) {
-         
+         request->signature = QUIT;
+         request->size = 2 + 2;
       }
-      else {
-         
-         return NULL;
-      }
-
-
-
+      else 
+         printf("Commande non reconnue. Faites /help ou /? pour voir les commandes existantes.\n");
    }
    else {
       request->signature = MESSAGE;
       MessageRequest* message_request = (MessageRequest*) request;
       message_request->player = false;
       strcpy(message_request->message, rest);
+      message_request->size = 2 + 2 + 1 + MAX_NAME_SIZE + strlen(rest);
    }
    return request;
 }
 
 
 void delete_request(ClientRequest* request){
-
+   free(request);
 }
 
 
@@ -157,10 +281,9 @@ static void app(const char *address, const char *name)
             }
          }
          ClientRequest* request = create_request(buffer);
-         if (request != NULL){
+         if (request->size != 0)
             write_server(sock, buffer);
-            delete_request(request);
-         }
+         delete_request(request);
       }
       else if(FD_ISSET(sock, &rdfs))
       {
@@ -232,7 +355,7 @@ static int read_server(SOCKET sock, char *buffer)
 
 static void write_server(SOCKET sock, const ClientRequest *request)
 {
-   if(send(sock, request, request->size, 0) < 0)
+   if(send(sock, request, 1024, 0) < 0)
    {
       perror("send()");
       exit(errno);

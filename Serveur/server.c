@@ -223,13 +223,9 @@ void print_board_to(Joueur dest, Game *game, unsigned int ob_ind)
 // #region ////////////////////////////////////// - Client/Player Management - ////////////////////////////////////////////
 
 // #region Friends
-void add_friend(PlayerInfo* player, Response_Friend* response){
-   player->friends[player->friend_count++] = &players[index_name_player(response->player_name)];
-}
-
-Bool accept_friend(Client *responder)
-{
- // TO DO (se baser sur accept challenge)
+void add_friend(PlayerInfo* player1, PlayerInfo* player2){
+   player1->friends[player1->friend_count++] = player2;
+   player2->friends[player2->friend_count++] = player1;
 }
 // #endregion
 
@@ -498,9 +494,10 @@ void read_request(Client *requester, const char *req)
       else
       {
          players[to_friend_player_index].player_state = RESPONDING_FRIEND;
+         players[to_friend_player_index].asking_friends = requester->player;
          char friend_request_msg[MAX_NAME_SIZE + 100];
          strcpy(friend_request_msg, req_player->name);
-         strcat(friend_request_msg, " wants to be friends... (accept or deny ?)"); ///////// TO DO Commandes à ajouter
+         strcat(friend_request_msg, " wants to be friends... (accept or decline ?)");
          write_client(players[to_friend_player_index].client->sock, friend_request_msg);  
 
          write_client(requester->sock, "Sent friend request."); 
@@ -514,19 +511,34 @@ void read_request(Client *requester, const char *req)
    case RESPOND: 
       Response *response = (Response *)request;
       req_player->player_state = LISTENING;
-      switch (response->response_type)
+      switch (requester->player->player_state)
       {
-      case CHALLENGE_RESPONSE:
-         Response_Challenge *resp_challenge = (Response_Challenge *)response;
-         if (resp_challenge->validation && accept_challenge(requester))
+      case RESPONDING_CHALLENGE:
+         if (response->validation && accept_challenge(requester))
             continue_game(req_player->current_game);
-         else
+         else {
             write_client(requester, "Game is cancelled.");
+            end_game(requester->player->current_game);
+         }
          break;
 
-      case FRIEND_RESPOND:
-         Response_Friend *resp_friend = (Response_Friend *)response;
-         if (resp_friend->validation && accept_friend(requester)) add_friend(...);
+      case RESPONDING_FRIEND:
+         PlayerInfo* askingPlayer = requester->player->asking_friends;
+         requester->player->player_state = IDLE;
+         requester->player->asking_friends = NULL;
+         if (response->validation) {
+            if (requester->player->friend_count >= MAX_FRIEND_COUNT || askingPlayer->friend_count >= MAX_FRIEND_COUNT) {
+               write_client(requester, "Max friend count achieved.");
+               write_client(askingPlayer->client, "Max friend count achieved.");
+               break;
+            }
+            if (!are_friend(requester->player, askingPlayer)){
+               write_client(requester, "You are already friends.");
+               write_client(askingPlayer->client, "You are already friends.");
+               break;
+            }
+            add_friend(requester->player, askingPlayer);
+         }
          break;
       }
       req_player->player_state = requester_state; // stops listening
@@ -740,7 +752,8 @@ static void app(void)
          p.observer_index = NON_OBSERVER;
          p.current_game = NULL;
          p.friend_count = 0;
-         p.client = NULL
+         p.client = NULL;
+         p.asking_friends = NULL;
 
          strncpy(p.name, buffer, MAX_NAME_SIZE - 1); /////////////// TO DO : à vérifier + BIO !!!!
          strncpy(p.password, buffer, MAX_PASSWORD_SIZE - 1);
