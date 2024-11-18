@@ -38,7 +38,7 @@ typedef struct {
    unsigned int size: 16; 
    Bool player;
    char player_name[MAX_NAME_SIZE]; // MAX BUF_SIZE admitted: 65535 - 1
-   char message[BUF_SIZE - sizeof(Bool) - MAX_NAME_SIZE];
+   char message[BUF_SIZE - sizeof(Bool) - MAX_NAME_SIZE - 2 - 2];
 }MessageRequest;
 
 typedef struct {
