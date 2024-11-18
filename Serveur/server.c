@@ -82,9 +82,12 @@ void cancel_game(Client *client, char *message)
 }
 
 void disconnect_players_from_game(Client * disconnected, char * message){
-   //TO DO envoeyr message au client non déconnecté
+   PlayerInfo* activePlayer = disconnected->player->current_game->clients_involved[0] == disconnected ? disconnected->player->current_game->clients_involved[1] : disconnected->player->current_game->clients_involved[0];
+   
    end_game(disconnected->player->current_game);
    remove_client(index_name_client(disconnected->player->name));
+
+   write_client(activePlayer->client->sock, message);
 }
 
 Bool make_move(Game *game, NumCase played_house)
@@ -395,7 +398,7 @@ void read_request(Client *requester, const char *req)
    {
    // #region LOGOUT //WIP: question of quick command after logout//
    case LOGOUT: 
-      disconnect_client(requester); // TO DO what if immediately a command is inputted after logout ?
+      disconnect_client(requester); // TO DO what if immediately a command is inputed after logout ?
       break;
    // #endregion
    
@@ -445,7 +448,7 @@ void read_request(Client *requester, const char *req)
       // we prepare the game and inform the challenged player
       challenged_client->player->player_state = RESPONDING_CHALLENGE;
       char buffer[BUF_SIZE];
-      sprintf(buffer, "You have been challenged by %s.\n Type ... to accept or ... to refuse\n", req_player->name); ////////////////////// TO DO Commandes à ajouter ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      sprintf(buffer, "You have been challenged by %s.\n Type /accept to accept or /decline to refuse\n", req_player->name);
       write_client(challenged_client->sock, buffer);
 
       create_game(requester, challenged_client, challenge_req->private);
