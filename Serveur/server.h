@@ -7,7 +7,7 @@
 Client clients[MAX_CLIENTS];
 int actual_clients;
 
-PlayerInfo players[MAX_PLAYER_COUNT];
+PlayerInfo* players[MAX_PLAYER_COUNT];
 int actual_players = 0; // no database as of now
 
 static void init(void);
