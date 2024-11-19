@@ -337,6 +337,7 @@ static void clear_clients() ////////////////////////////////////////////////////
    int i = 0;
    for (i = 0; i < actual_clients; i++)
    {
+      free(clients[i].player);
       closesocket(clients[i].sock);
    }
 }
@@ -563,7 +564,7 @@ void read_request(Client *requester, const char *req)
             if (req_player->friends[i]->client != NULL) // if friend connected
             {
                strcpy(ActivePlayerMessage, req_player->friends[i]->name);
-               strcat(ActivePlayerMessage, req_player->friends[i]->player_state == IDLE ? "Ready" : (req_player->friends[i]->player_state == IN_GAME ? "In Game" : "-"));
+               strcat(ActivePlayerMessage, req_player->friends[i]->player_state == IDLE ? " Ready" : (req_player->friends[i]->player_state == IN_GAME ? " In Game" : " -"));
                write_client(requester->sock, ActivePlayerMessage);
             }
          }
@@ -574,7 +575,7 @@ void read_request(Client *requester, const char *req)
          {
             Bool test_privacy = clients[i].player->player_state == IN_GAME ? (!clients[i].player->current_game->private || are_friend(clients[i].player, requester->player)) : false;
             strcpy(ActivePlayerMessage, clients[i].player->name);
-            strcat(ActivePlayerMessage, clients[i].player->player_state == IDLE ? "Ready" : ((clients[i].player->player_state == IN_GAME && test_privacy) ? "In Game" : "-"));
+            strcat(ActivePlayerMessage, clients[i].player->player_state == IDLE ? " Ready" : ((clients[i].player->player_state == IN_GAME && test_privacy) ? " In Game" : " -"));
             write_client(requester->sock, ActivePlayerMessage);
          }
       }
@@ -772,14 +773,14 @@ static void app(void)
                free(p);
                continue;
             }
-            else // player exists {
+            else { // player exists
                free(p);
                p = players[index_player];
             }
          }
 
          Client c = {csock};
-         c.player = &p;
+         c.player = p;
 
          // Player connexion
          int index_client = index_name_client(p->name);
@@ -811,11 +812,11 @@ static void app(void)
             if (FD_ISSET(clients[i].sock, &rdfs))
             {
                Client *client = &clients[i];
-               int c = read_client(clients[i].sock, buffer);
+               int c = read_client(client->sock, buffer);
                /* client disconnected */
                if (c == 0)
                {
-                  disconnect_client(&clients[i]);
+                  disconnect_client(client);
                }
                else
                {

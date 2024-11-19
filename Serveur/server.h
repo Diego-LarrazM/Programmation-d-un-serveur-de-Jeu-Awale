@@ -4,11 +4,11 @@
 #include "server_client.h"
 #include "../Libraries/request.h"
 
-Client clients[MAX_CLIENTS];
-int actual_clients;
+static Client clients[MAX_CLIENTS];
+static int actual_clients;
 
-PlayerInfo* players[MAX_PLAYER_COUNT];
-int actual_players = 0; // no database as of now
+static PlayerInfo* players[MAX_PLAYER_COUNT];
+static int actual_players = 0; // no database as of now
 
 static void init(void);
 static void end(void);
