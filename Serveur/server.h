@@ -4,7 +4,7 @@
 #include "server_client.h"
 #include "../Libraries/request.h"
 
-static Client clients[MAX_CLIENTS];
+static Client* clients[MAX_CLIENTS];
 static int actual_clients;
 
 static PlayerInfo* players[MAX_PLAYER_COUNT];
@@ -17,9 +17,10 @@ static int init_connection(void);
 static void end_connection(int sock);
 static int read_client(SOCKET sock, char *buffer);
 static void write_client(SOCKET sock, const char *buffer);
-static void send_message_to_all_clients(Client *client, const char *buffer, char from_server);
+static void send_message_to_all_clients(Client *client, const char *buffer, Bool from_server);
 static void remove_client(int to_remove);
 static void clear_clients();
+static void clear_players();
 void manage_timeout(Client *client, unsigned int duration, State to_check, char *message,  void (*action)(Client *, char *));
 
 int index_name_client(char name[MAX_NAME_SIZE]);

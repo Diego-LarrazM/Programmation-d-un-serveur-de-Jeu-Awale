@@ -222,11 +222,11 @@ ClientRequest* create_request(const char* buffer){
       else 
          printf("Commande non reconnue. Faites /help ou /? pour voir les commandes existantes.\n");
    }
-   else {
+   else if (buffer[0] != '\0'){
       request->signature = MESSAGE;
       MessageRequest* message_request = (MessageRequest*) request;
       message_request->player = false;
-      strcpy(message_request->message, rest);
+      strcpy(message_request->message, buffer);
       message_request->size = 2 + 2 + 1 + MAX_NAME_SIZE + strlen(rest);
    }
    return request;
