@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "server.h"
 
@@ -16,6 +17,10 @@ static void init(void)
       puts("WSAStartup failed !");
       exit(EXIT_FAILURE);
    }
+
+#elif defined(__linux__) || defined(linux)
+   signal(SIGCHLD,SIG_IGN);
+
 #endif
 }
 
@@ -74,13 +79,14 @@ void end_game(Game *game)
    free(game);
 }
 
-void cancel_game(Client *client, char *message)
+void cancel_game(Client *client, const char *message)
 {
    write_client(client->sock, message);
    end_game(client->player->current_game);
 }
 
-void disconnect_players_from_game(Client * disconnected, char * message){
+void disconnect_players_from_game(Client * disconnected, const char * message)
+{
    PlayerInfo* activePlayer = disconnected->player->current_game->clients_involved[0] == disconnected ? disconnected->player->current_game->clients_involved[1]->player : disconnected->player->current_game->clients_involved[0]->player;
    
    end_game(disconnected->player->current_game);
@@ -94,7 +100,7 @@ Bool make_move(Game *game, NumCase played_house)
    return play(game->game_board, played_house);
 }
 
-Bool is_current_player(Game *game, Client *client)
+Bool is_current_player(const Game* game, const Client* client)
 {
    return game->clients_involved[game->game_board->joueurCourant - 1] == client;
 }
@@ -204,7 +210,7 @@ void bitfieldToString(Joueur JCourant, BitField_1o cases, char *buffer)
    buffer[j] = '\0';
 }
 
-void print_board_to(Joueur dest, Game *game, unsigned int ob_ind)
+void print_board_to(Joueur dest, const Game* game, unsigned int ob_ind)
 {
    char buffer[300];
    if (dest)
@@ -229,21 +235,38 @@ void add_friend(PlayerInfo* player1, PlayerInfo* player2){
    player1->friends[player1->friend_count++] = player2;
    player2->friends[player2->friend_count++] = player1;
 }
+
+void decline_friend(Client* declined, const char* message){
+   PlayerInfo* declinedPlayer = declined->player;
+   PlayerInfo* otherPlayer = declined->player->asking_friends;
+
+   declined->player->player_state = IDLE;
+   declined->player->asking_friends = NULL;
+   write_client(declinedPlayer->client->sock, message);
+
+   if(otherPlayer->player_state == RESPONDING_FRIEND){
+      otherPlayer->player_state = IDLE;
+      write_client(otherPlayer->client->sock, message);
+   }  
+   otherPlayer->asking_friends = NULL;
+   
+}
 // #endregion
 
-void manage_timeout(Client *client, unsigned int duration, State to_check, char *message,  void (*action)(Client *, char *))
+void manage_timeout(Client *client, unsigned int duration, const State to_check, const char *message, void (*action)(Client *, const char *))
 {
-   /* TODO resoudre zombie*/
    if (!fork())
-   { ////////////////////// ATTENTION ZOMBIE /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      sleep(duration);
-      if (client->player->player_state == to_check)
+   {
+      sleep(5);
+      if (client->player->player_state == to_check){
          action(client, message);
+      }
+        
       exit(0);
    }
 }
 
-int index_name_client(char name[MAX_NAME_SIZE])
+int index_name_client(const char name[MAX_NAME_SIZE])
 {
    int i;
    for (i = 0; i < actual_clients; i++)
@@ -252,7 +275,7 @@ int index_name_client(char name[MAX_NAME_SIZE])
    return i;
 }
 
-int index_name_player(char name[MAX_NAME_SIZE])
+int index_name_player(const char name[MAX_NAME_SIZE])
 {
    int i;
    for (i = 0; i < actual_players; i++)
@@ -261,7 +284,7 @@ int index_name_player(char name[MAX_NAME_SIZE])
    return i;
 }
 
-Bool are_friend(PlayerInfo *player1, PlayerInfo *player2)
+Bool are_friend(const PlayerInfo* player1, const PlayerInfo* player2)
 {
    for (int i = 0; i < player1->friend_count; ++i)
       if (player1->friends[i] == player2)
@@ -298,6 +321,11 @@ static void send_message_to_all_clients(Client *sender, const char *buffer, Bool
          write_client(clients[i]->sock, message);
       }
    }
+}
+
+static void send_error_message(Client* client, const char *message, const State default_state){
+   write_client(client->sock, message);
+   if(default_state != UNDEFINED) client->player->player_state = default_state;
 }
 
 static int read_client(SOCKET sock, char *buffer)
@@ -405,6 +433,12 @@ void read_request(Client *requester, const char *req)
    {
    // #region LOGOUT //WIP: question of quick command after logout//
    case LOGOUT: 
+      if (requester_state != IDLE)
+      {
+         send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
+         break; 
+      }
+         
       disconnect_client(requester); // TO DO what if immediately a command is inputed after logout ?
       break;
    // #endregion
@@ -412,7 +446,10 @@ void read_request(Client *requester, const char *req)
    // #region PROFILE //WIP//
    case PROFILE: 
       if (requester_state != IDLE)
-         break;
+      {
+         send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
+         break; 
+      }
       req_player->player_state = LISTENING;
       ProfileRequest *profile_req = (ProfileRequest *)request;
       req_player->player_state = requester_state; // stops listening
@@ -427,7 +464,7 @@ void read_request(Client *requester, const char *req)
          int index = index_name_client(message_req->player_name);
          if (index == actual_clients)
          {
-            write_client(requester->sock, "Error. Player doesn't exist.");
+            send_error_message(requester, "Error: Player doesn't exist.", UNDEFINED);
             break;
          }
          char message[BUF_SIZE];
@@ -445,7 +482,10 @@ void read_request(Client *requester, const char *req)
    // #region CHALLENGE
    case CHALLENGE:
       if (requester_state != IDLE)
-         break;
+      {
+         send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
+         break; 
+      }
       req_player->player_state = AWAITING_CHALLENGE;
       ChallengeRequest *challenge_req = (ChallengeRequest *)request;
       int challenged_index = index_name_client(challenge_req->player_name); // index of challenged player
@@ -457,8 +497,7 @@ void read_request(Client *requester, const char *req)
 
       if (challenged_not_exists || challenged_occupied)
       {
-         write_client(requester->sock, "Player is not available right now");
-         req_player->player_state = IDLE;
+         send_error_message(requester, "Error: Player is not available right now", IDLE);
          break;
       }
 
@@ -476,7 +515,10 @@ void read_request(Client *requester, const char *req)
    // #region MOVE
    case MOVE:
       if (requester_state != IN_GAME)
-         break;
+      {
+         send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
+         break; 
+      }
       req_player->player_state = LISTENING;
       MoveRequest *move_req = (MoveRequest *)request;
       Game *game = req_player->current_game;
@@ -486,42 +528,45 @@ void read_request(Client *requester, const char *req)
          if (make_move(game, move_req->played_house))
             continue_game(game);
          else
-            write_client(requester->sock, "Invalid House has been inputed. Please choose again.");
+            send_error_message(requester, "Error:Invalid House has been inputed. Please choose again.", UNDEFINED);
       }
       else
-         write_client(requester->sock, "Please wait for your turn to play");
+         send_error_message(requester, "Error: Please wait for your turn to play", UNDEFINED);
       req_player->player_state = requester_state; // stops listening
       break;
    // #endregion
 
    // #region FRIEND //WIP: way to remember friend request like game//
    case FRIEND: 
+      if (requester_state != IDLE)
+      {
+         send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
+         break; 
+      }
       FriendRequest *friend_req = (FriendRequest *)request;
       unsigned int to_friend_player_index = index_name_client(friend_req->player_name);
 
       //Error handling
       if (to_friend_player_index == actual_clients)
       {
-         write_client(requester->sock, "Error. Player doesn't exist.");
-         req_player->player_state = requester_state; // stops listening
+         send_error_message(requester, "Error: Player doesn't exist.", IDLE);
          break;
       }
       PlayerInfo* to_friend = clients[to_friend_player_index]->player;
 
       if(to_friend->player_state != IDLE)
       {
-         write_client(requester->sock, "Error. Player is occupied.");
-         req_player->player_state = requester_state; // stops listening
+         send_error_message(requester, "Error: Player is occupied.", IDLE);
          break;
       }
       if(are_friend(req_player, players[to_friend_player_index]))
       {
-         write_client(requester->sock, "Error. You are already friends with this player.");
-         req_player->player_state = requester_state; // stops listening
+         send_error_message(requester, "Error: You are already friends with this player.", IDLE);
          break;
       }
       // Changing states
       req_player->player_state = AWAITING_FRIEND;
+      req_player->asking_friends = to_friend;
       to_friend->player_state = RESPONDING_FRIEND;
       to_friend->asking_friends = requester->player;
 
@@ -532,6 +577,7 @@ void read_request(Client *requester, const char *req)
       
       write_client(to_friend->client->sock, friend_request_msg);  
       write_client(requester->sock, "Sent friend request."); 
+      manage_timeout(requester, 30, AWAITING_FRIEND, "Timeout: Friend request.", decline_friend);
       break;
    // #endregion
 
@@ -552,22 +598,29 @@ void read_request(Client *requester, const char *req)
       case RESPONDING_FRIEND:
          PlayerInfo* askingPlayer = requester->player->asking_friends;
          requester->player->asking_friends = NULL;
-         requester->player->player_state = IDLE; // stops listening
-         askingPlayer->player_state = IDLE;
          if (response->validation) {
             if (requester->player->friend_count >= MAX_FRIEND_COUNT || askingPlayer->friend_count >= MAX_FRIEND_COUNT) {
-               write_client(requester->sock, "Max friend count achieved.");
-               write_client(askingPlayer->client->sock, "Max friend count achieved.");
+               send_error_message(requester, "Error: Max friend count achieved.", IDLE);
+               send_error_message(askingPlayer->client, "Error: Max friend count achieved.", IDLE);
                break;
             }
             if (are_friend(requester->player, askingPlayer)){
-               write_client(requester->sock, "You are already friends.");
-               write_client(askingPlayer->client->sock, "You are already friends.");
+               send_error_message(requester, "Error: You are already friends.", IDLE);
+               send_error_message(askingPlayer->client, "Error: You are already friends.", IDLE);
                break;
             }
             add_friend(requester->player, askingPlayer); 
+            write_client(requester->sock, "Success: Friend added !");
+            write_client(askingPlayer->client->sock, "Success: Friend added !");
+            requester->player->player_state = IDLE; // stops listening
+            askingPlayer->player_state = IDLE;
+
          }
+         else decline_friend(askingPlayer->client, "Friend request was declined.");
          break;
+
+      default:
+         send_error_message(requester, "Error: Nothing to respond to.", requester_state);
       }
       break;
    // #endregion
@@ -575,7 +628,10 @@ void read_request(Client *requester, const char *req)
    // #region ACTIVE_PLAYERS //WIP : test_privacy takes in account 1 player but not friend w both//
    case ACTIVE_PLAYERS:
       if (requester_state != IDLE)
-         break;
+      {
+         send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
+         break; 
+      }
       req_player->player_state = LISTENING;
       SeeActivePlayersRequest *active_players_req = (SeeActivePlayersRequest *)request;
       write_client(requester->sock, "<-- Active Player Name : State -->");
@@ -610,8 +666,11 @@ void read_request(Client *requester, const char *req)
 
    // #region ACTIVE_GAMES //WIP : test_privacy takes in account 1 player but not friend w both//
    case ACTIVE_GAMES: 
-      if (req_player->player_state != IDLE)
-         break;
+      if (requester_state != IDLE)
+      {
+         send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
+         break; 
+      }
       req_player->player_state = LISTENING;
       SeeActiveGamesRequest *actives_games_req = (SeeActiveGamesRequest *)request;
       char ActiveGameMessage[2 * MAX_NAME_SIZE + sizeof(" versus ") + 1];
@@ -650,8 +709,11 @@ void read_request(Client *requester, const char *req)
 
    // #region OBSERVE //WIP : test_privacy takes in account 1 player but not friend w both//
    case OBSERVE:
-      if (req_player->player_state != IDLE)
-         break;
+      if (requester_state != IDLE)
+      {
+         send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
+         break; 
+      }
       req_player->player_state = LISTENING;
       ObserveRequest *observe_req = (ObserveRequest *)request;
 
@@ -668,32 +730,31 @@ void read_request(Client *requester, const char *req)
             req_player->player_state = OBSERVING;
          else
          {
-            write_client(requester->sock, "Max observer limit achieved in game");
-            req_player->player_state = requester_state; // stops listening
+            send_error_message(requester, "Error: Max observer limit achieved in game", IDLE); // stops listening
          }
       }
       else
       {
-         write_client(requester->sock, "No game to observe");
-         req_player->player_state = requester_state; // stops listening
+         send_error_message(requester, "Error: No game to observe", IDLE); // stops listening
       }
       break;
    // #endregion
 
    // #region QUIT
    case QUIT: 
-      if (req_player->player_state != OBSERVING)
-         break;
+      if (requester_state != OBSERVING)
+      {
+         send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
+         break; 
+      }
       req_player->player_state = LISTENING;
       if (remove_observer(requester))
       {
-         write_client(requester->sock, "Quited succesfully");
-         req_player->player_state = IDLE;
+         write_client(requester->sock, "Success: Quitted game");
       }
       else
       {
-         write_client(requester->sock, "Error occured when quitting"); //////////////////////////////////////////////////////////////////// Gestion erreurs avec message ???
-         req_player->player_state = requester_state;                   // stops listening
+         send_error_message(requester, "Error: error when trying to quit", requester_state); // stops listening
       }
       break;
    // #endregion

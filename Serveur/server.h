@@ -18,15 +18,17 @@ static void end_connection(int sock);
 static int read_client(SOCKET sock, char *buffer);
 static void write_client(SOCKET sock, const char *buffer);
 static void send_message_to_all_clients(Client *client, const char *buffer, Bool from_server);
+static void send_error_message(Client* client, const char *message, const State default_state);
 static void remove_client(int to_remove);
 static void clear_clients();
 static void clear_players();
-void manage_timeout(Client *client, unsigned int duration, State to_check, char *message,  void (*action)(Client *, char *));
+void manage_timeout(Client *client, unsigned int duration, const State to_check, const char *message, void (*action)(Client *, const char *));
 
-int index_name_client(char name[MAX_NAME_SIZE]);
-int index_name_player(char name[MAX_NAME_SIZE]);
-Bool are_friend(PlayerInfo* player1, PlayerInfo* player2);
+int index_name_client(const char name[MAX_NAME_SIZE]);
+int index_name_player(const char name[MAX_NAME_SIZE]);
+Bool are_friend(const PlayerInfo* player1, const PlayerInfo* player2);
 void add_friend(PlayerInfo* player1, PlayerInfo* player2);
+void decline_friend(Client* declined, const char* message);
 
 void read_request(Client *requester, const char *req);
 
@@ -35,12 +37,12 @@ Bool accept_challenge(Client* challenged);
 Bool add_observer(Game* game, Client* observer);
 Bool remove_observer(Client* observer);
 void bitfieldToString(Joueur JCourant, BitField_1o cases, char* buffer);
-void print_board_to(Joueur dest, Game* game, unsigned int ob_ind);
+void print_board_to(Joueur dest, const Game* game, unsigned int ob_ind);
 void continue_game(Game* game);
 Bool make_move(Game* game, NumCase played_house);
-Bool is_current_player(Game* game, Client* client);
+Bool is_current_player(const Game* game, const Client* client);
 void end_game(Game* game);
-void cancel_game(Client* client, char* message);
-void disconnect_players_from_game(Client * disconnected, char * message);
+void cancel_game(Client* client, const char* message);
+void disconnect_players_from_game(Client * disconnected, const char * message);
 
 #endif /* guard */

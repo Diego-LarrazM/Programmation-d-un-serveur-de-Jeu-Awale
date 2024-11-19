@@ -10,6 +10,7 @@
 
          
 typedef enum {
+UNDEFINED = -3,
 LISTENING = 0, 
 LOGGED_OUT = -2,
 DISCONNECTED_FGAME = -1, // only if force-disconnected from game
