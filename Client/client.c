@@ -365,7 +365,7 @@ static void write_server(SOCKET sock, const char *buffer)
 
 static void write_server_request(SOCKET sock, const ClientRequest *request)
 {
-   if(send(sock, request, 1024, 0) < 0)
+   if(send(sock, request, 1023, 0) < 0)
    {
       perror("send()");
       exit(errno);

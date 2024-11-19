@@ -10,7 +10,7 @@ typedef enum  {FRIEND_RESPOND = 0, CHALLENGE_RESPONSE = 1} ResponseType;
 typedef struct {
    RequestSignature signature: 16;
    unsigned int size: 16; 
-   char data[BUF_SIZE]; // MAX BUF_SIZE admitted: 65535
+   char data[BUF_SIZE - 4]; // MAX BUF_SIZE admitted: 65535
 }ClientRequest;
 /*
 <signatures>              <DATA>
@@ -33,7 +33,7 @@ typedef struct {
    unsigned int size: 16; 
    Bool is_me;
    char player_name[MAX_NAME_SIZE]; // MAX BUF_SIZE admitted: 65535 - 1
-   //char excess[BUF_SIZE - 1 - MAX_NAME_SIZE]; 
+   //char excess[BUF_SIZE - 5 - MAX_NAME_SIZE]; 
 }ProfileRequest;
 
 typedef struct {
@@ -41,7 +41,7 @@ typedef struct {
    unsigned int size: 16; 
    Bool player;
    char player_name[MAX_NAME_SIZE]; // MAX BUF_SIZE admitted: 65535 - 1
-   char message[BUF_SIZE - sizeof(Bool) - MAX_NAME_SIZE - 2 - 2];
+   char message[BUF_SIZE - 4 - sizeof(Bool) - MAX_NAME_SIZE];
 }MessageRequest;
 
 typedef struct {
@@ -49,7 +49,7 @@ typedef struct {
    unsigned int size: 16; 
    Bool private;
    char player_name[MAX_NAME_SIZE]; // MAX BUF_SIZE admitted: 65535 - 1
-   //char excess[BUF_SIZE - sizeof(Bool) - MAX_NAME_SIZE]; 
+   //char excess[BUF_SIZE -4 - sizeof(Bool) - MAX_NAME_SIZE]; 
 }ChallengeRequest;
 
 typedef struct {
@@ -57,21 +57,21 @@ typedef struct {
    unsigned int size: 16; 
    Bool private;
    Bool online;
-   //char excess[BUF_SIZE - 2*sizeof(Bool)]; 
+   //char excess[BUF_SIZE - 4 - 2*sizeof(Bool)]; 
 }PlayRequest;
 
 typedef struct {
    RequestSignature signature: 16;
    unsigned int size: 16; 
    NumCase played_house;
-   //char excess[BUF_SIZE - 1]; 
+   //char excess[BUF_SIZE - 4 - 1]; 
 }MoveRequest;
 
 typedef struct {
    RequestSignature signature: 16;
    unsigned int size: 16; 
    char player_name[MAX_NAME_SIZE]; // MAX BUF_SIZE admitted: 65535 - 1
-   //char excess[BUF_SIZE - MAX_NAME_SIZE]; 
+   //char excess[BUF_SIZE - 4 - MAX_NAME_SIZE]; 
 }FriendRequest;
 
 //////////////////////////////////////////////////////////
@@ -87,7 +87,7 @@ typedef struct {
    unsigned int size: 16; 
    //ResponseType response_type;
    Bool validation;
-   //char excess[BUF_SIZE - sizeof(Bool) - sizeof(ResponseType)]; 
+   //char excess[BUF_SIZE - 4 - sizeof(Bool) - sizeof(ResponseType)]; 
 }Response;
 
 //////////////////////////////////////////////////////////
@@ -95,21 +95,21 @@ typedef struct {
    RequestSignature signature: 16;
    unsigned int size: 16; 
    Bool friends_only;
-   //char excess[BUF_SIZE - sizeof(Bool)]; 
+   //char excess[BUF_SIZE - 4 - sizeof(Bool)]; 
 }SeeActivePlayersRequest;
 
 typedef struct {
    RequestSignature signature: 16;
    unsigned int size: 16; 
    Bool friends_only;
-   //char excess[BUF_SIZE - sizeof(Bool)]; 
+   //char excess[BUF_SIZE - 4 - sizeof(Bool)]; 
 }SeeActiveGamesRequest;
 
 typedef struct {
    RequestSignature signature: 16;
    unsigned int size: 16; 
    char player_name[MAX_NAME_SIZE]; 
-   //char excess[BUF_SIZE - MAX_NAME_SIZE]; 
+   //char excess[BUF_SIZE - 4 - MAX_NAME_SIZE]; 
 }ObserveRequest;
 
 
