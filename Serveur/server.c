@@ -256,7 +256,7 @@ int index_name_player(char name[MAX_NAME_SIZE])
 {
    int i;
    for (i = 0; i < actual_players; i++)
-      if (strcmp(players[i].name, name) == 0)
+      if (strcmp(players[i]->name, name) == 0)
          break;
    return i;
 }
@@ -491,16 +491,16 @@ void read_request(Client *requester, const char *req)
          req_player->player_state = requester_state; // stops listening
          break;
       }
-      if(are_friend(req_player, &players[to_friend_player_index]))
+      if(are_friend(req_player, players[to_friend_player_index]))
          write_client(requester->sock, "Error. You are already friends with this player.");
       else
       {
-         players[to_friend_player_index].player_state = RESPONDING_FRIEND;
-         players[to_friend_player_index].asking_friends = requester->player;
+         players[to_friend_player_index]->player_state = RESPONDING_FRIEND;
+         players[to_friend_player_index]->asking_friends = requester->player;
          char friend_request_msg[MAX_NAME_SIZE + 100];
          strcpy(friend_request_msg, req_player->name);
          strcat(friend_request_msg, " wants to be friends... (accept or decline ?)");
-         write_client(players[to_friend_player_index].client->sock, friend_request_msg);  
+         write_client(players[to_friend_player_index]->client->sock, friend_request_msg);  
 
          write_client(requester->sock, "Sent friend request."); 
       }
@@ -749,18 +749,18 @@ static void app(void)
          }
 
          /* Player connexion */
-         PlayerInfo p;
-         p.player_state = IDLE;
-         p.observer_index = NON_OBSERVER;
-         p.current_game = NULL;
-         p.friend_count = 0;
-         p.client = NULL;
-         p.asking_friends = NULL;
+         PlayerInfo* p = (PlayerInfo*) malloc(sizeof(PlayerInfo));
+         p->player_state = IDLE;
+         p->observer_index = NON_OBSERVER;
+         p->current_game = NULL;
+         p->friend_count = 0;
+         p->client = NULL;
+         p->asking_friends = NULL;
 
-         strncpy(p.name, buffer, MAX_NAME_SIZE - 1); /////////////// TO DO : à vérifier + BIO !!!!
-         strncpy(p.password, buffer, MAX_PASSWORD_SIZE - 1);
+         strncpy(p->name, buffer, MAX_NAME_SIZE - 1); /////////////// TO DO : à vérifier + BIO !!!!
+         strncpy(p->password, buffer, MAX_PASSWORD_SIZE - 1);
 
-         int index_player = index_name_player(p.name);
+         int index_player = index_name_player(p->name);
          if (index_player == actual_players && actual_players != MAX_PLAYER_COUNT) // New Player
          {
             players[actual_players] = p;
@@ -768,23 +768,27 @@ static void app(void)
          }
          else
          {
-            if (strcmp(players[index_player].password, p.password) != 0) // Wrong password
+            if (strcmp(players[index_player]->password, p->password) != 0) { // Wrong password
+               free(p);
                continue;
-            else // player exists
+            }
+            else // player exists {
+               free(p);
                p = players[index_player];
+            }
          }
 
          Client c = {csock};
          c.player = &p;
 
          // Player connexion
-         int index_client = index_name_client(p.name);
+         int index_client = index_name_client(p->name);
          if (index_client != actual_clients && clients[index_client].player->player_state != DISCONNECTED_FGAME) // client already connected ?
             continue;
          if (index_client == actual_clients) // not connected ?
          {
             clients[actual_clients] = c;
-            p.client = &c;
+            p->client = &c;
             ++actual_clients;
             /* what is the new maximum fd ? */
             max = csock > max ? csock : max;
