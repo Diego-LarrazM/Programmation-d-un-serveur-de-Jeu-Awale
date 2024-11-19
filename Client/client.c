@@ -80,6 +80,7 @@ ClientRequest* create_request(const char* buffer){
          }
          char msg[BUF_SIZE - 52];
          *sSpacePtr = '\0';
+         strcpy(rest, spacePtr + 1);
          strcpy(msg, sSpacePtr + 1);
          if (msg[0] == '\0') {
             printf("To use the /msg command, you need to indicate the player name then the message you want to send.\n/msg <player-name> <message-content>\n");
