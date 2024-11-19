@@ -154,7 +154,7 @@ ClientRequest* create_request(const char* buffer){
             return request;
          }
          MoveRequest* move_request = (MoveRequest*) request;
-         move_request->played_house = numero;
+         move_request->played_house = numero - 1;
          move_request->size = 2 + 2 + 4;
       }
       else if (strcmp(command, "friend") == 0) {

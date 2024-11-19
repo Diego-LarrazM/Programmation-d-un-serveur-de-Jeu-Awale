@@ -34,6 +34,7 @@ Plateau* initGame();
 void endGame(Plateau* p);
 
 BitField_1o playableFamine(Plateau* p);
+BitField_1o playable(Plateau* p);
 
 Bool play(Plateau* p, NumCase num_case);
 Bool cantPlay(Plateau* p, NumCase num_case, BitField_1o casesJouables);

@@ -4,13 +4,13 @@
 
 Plateau* initGame(){
     Plateau* p = (Plateau*)malloc(sizeof(Plateau));
-    //for(int i = 0; i < NB_CASES; ++i) p->cases[i] = 4;
-    p->cases[0] = 1; p->cases[2] = 10; p->cases[3] = 2; p->cases[5] = 1;
+    for(int i = 0; i < NB_CASES; ++i) p->cases[i] = 4;
+    //p->cases[0] = 1; p->cases[2] = 10; p->cases[3] = 2; p->cases[5] = 1;
 
     p->grainesJ1 = p->grainesJ2 = 0;
 
 
-//SENS HORAIRE A DEFINIR par joueurs////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //SENS HORAIRE A DEFINIR par joueurs////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     p->sensJeu = HORAIRE;
 
 
@@ -147,6 +147,18 @@ BitField_1o playableFamine(Plateau* p){
         */
         if(p->cases[i] >= (((int)(p->sensJeu) == HORAIRE ? 6:1) - (int)(p->sensJeu) * (i - offset)))
             casesAutorise |= ajout; 
+        ajout <<= 1;
+    }
+    return casesAutorise;
+}
+
+BitField_1o playable(Plateau* p){
+    BitField_1o casesAutorise = 0; // les bits de 1 à 6 indiquent si les cases 1-6(Joueur1) ou 7-12 (Joueur2) sont jouables (égal à 1).
+    int ajout = 1;
+    NumCase offset = p->joueurCourant == JOUEUR2 ? 0 : 6;
+
+    for(int i = offset; i < 6 + offset; i++) {
+        if(p->cases[i] > 0)  casesAutorise |= ajout; // activation
         ajout <<= 1;
     }
     return casesAutorise;

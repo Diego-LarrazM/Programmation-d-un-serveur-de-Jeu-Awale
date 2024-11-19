@@ -97,7 +97,13 @@ void disconnect_players_from_game(Client * disconnected, const char * message)
 
 Bool make_move(Game *game, NumCase played_house)
 {
-   return play(game->game_board, played_house);
+   if (!play(game->game_board, played_house))
+      return false;
+   char message[300];
+   sprintf(message, "Coup joué : %d\n", played_house + 1);
+   write_client(game->clients_involved[0]->sock, message);
+   write_client(game->clients_involved[1]->sock, message);
+   return true;
 }
 
 Bool is_current_player(const Game* game, const Client* client)
@@ -149,7 +155,7 @@ void continue_game(Game *game)
    }
 
    // Print possible houses to pick for current player
-   BitField_1o casesJouables = isOpponentFamished(game->game_board) ? playableFamine(game->game_board) : 63;
+   BitField_1o casesJouables = isOpponentFamished(game->game_board) ? playableFamine(game->game_board) : playable(game->game_board);
    char casesJouablesStr[20];
    bitfieldToString(game->game_board->joueurCourant, casesJouables, casesJouablesStr);
    sprintf(message, "Choissisez une case parmis: %s\n", casesJouablesStr);
@@ -162,9 +168,13 @@ Bool add_observer(Game *game, Client *observer)
 {
    if (game->nb_observers >= MAX_OBSERVERS)
       return false; // observer count must not be exceeded
+   printf("Observing new: %s, num actuel:%d\n", observer->player->name, game->nb_observers);
    observer->player->observer_index = game->nb_observers;
    observer->player->current_game = game;
+   printf("Nearly\n");
    game->observers[game->nb_observers++] = observer;
+   printf("oof!\n");
+   printf("new num:%d, observer:%s\n",game->nb_observers,  game->observers[observer->player->observer_index]->player->name);
    return true;
 }
 
@@ -190,7 +200,7 @@ void bitfieldToString(Joueur JCourant, BitField_1o cases, char *buffer)
    NumCase j = 0;
    while (cases)
    {
-      if (cases & 1)
+      if ((cases & 1))
       {
          if (i >= 10)
          {
@@ -352,7 +362,9 @@ static void disconnect_client(Client * client){
    if(client->player->player_state == IN_GAME)
    {
       client->player->player_state = DISCONNECTED_FGAME;
-      manage_timeout(client, 30, DISCONNECTED_FGAME, "Player disconnected. Game is cancelled", disconnect_players_from_game); // client left as a zombie for 30s
+      PlayerInfo* activePlayer = client->player->current_game->clients_involved[0] == client ? client->player->current_game->clients_involved[1]->player : client->player->current_game->clients_involved[0]->player;
+      write_client(activePlayer->client->sock, "Player disconnected, waiting 30 seconds...");
+      //manage_timeout(client, 30, DISCONNECTED_FGAME, "Player disconnected. Game is cancelled", disconnect_players_from_game); // client left as a zombie for 30s
    }
    else
    {
@@ -508,7 +520,7 @@ void read_request(Client *requester, const char *req)
       write_client(challenged_client->sock, buffer);
 
       create_game(requester, challenged_client, challenge_req->private);
-      manage_timeout(requester, 30, AWAITING_CHALLENGE, "Challenge timeout. Game cancelled", cancel_game);
+      //manage_timeout(requester, 30, AWAITING_CHALLENGE, "Challenge timeout. Game cancelled", cancel_game);
       break;
    // #endregion 
 
@@ -577,7 +589,7 @@ void read_request(Client *requester, const char *req)
       
       write_client(to_friend->client->sock, friend_request_msg);  
       write_client(requester->sock, "Sent friend request."); 
-      manage_timeout(requester, 30, AWAITING_FRIEND, "Timeout: Friend request.", decline_friend);
+      //manage_timeout(requester, 30, AWAITING_FRIEND, "Timeout: Friend request.", decline_friend);
       break;
    // #endregion
 
@@ -591,6 +603,7 @@ void read_request(Client *requester, const char *req)
             continue_game(req_player->current_game);
          else {
             write_client(requester->sock, "Game is cancelled.");
+            write_client(requester->player->current_game->clients_involved[0]->sock, "Game is cancelled.");
             end_game(requester->player->current_game);
          }
          break;
@@ -795,6 +808,7 @@ static void app(void)
       /* add socket of each client */
       for (i = 0; i < actual_clients; i++)
       {
+         if(clients[i]->player->player_state == DISCONNECTED_FGAME) continue;
          FD_SET(clients[i]->sock, &rdfs);
       }
 
@@ -887,7 +901,15 @@ static void app(void)
          else // disconected forcibly from game and timeout still active
          { 
             clients[index_client]->sock = csock;
-            clients[index_client]->player->player_state = IN_GAME;  // TO DO :revoir si bon
+            clients[index_client]->player->player_state = IN_GAME; 
+            write_client(clients[index_client]->sock, "Welcome back!");
+            Game* game = clients[index_client]->player-> current_game;
+            // We re-inform of game state
+            print_board_to(clients[index_client] == game->clients_involved[0] ? JOUEUR1 : JOUEUR2, game, 0);
+            
+            // We inform the other player
+            Client* other_client = clients[index_client] == game->clients_involved[0] ? game->clients_involved[1] : game->clients_involved[0];
+            write_client(other_client->sock, "Player reconnected !");
          }
 
       }
