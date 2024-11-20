@@ -36,7 +36,7 @@ typedef struct in_addr IN_ADDR;
 #define MAX_OBSERVERS (MAX_CLIENTS - 2)
 
 #define BUF_SIZE 1024
-#define MESSAGE_TIME_INTERVAL 50 // in milliseconds
+#define MESSAGE_TIME_INTERVAL 1 // in milliseconds
 #define STD_TIMEOUT_DURATION 30000 // in milliseconds
 
 #define MAX_PLAYER_COUNT 1024

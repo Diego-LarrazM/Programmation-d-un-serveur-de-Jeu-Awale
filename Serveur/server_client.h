@@ -56,7 +56,7 @@ typedef struct struct_Game
 {
    Bool private;
    Plateau* game_board;
-   Client* clients_involved[2];
+   PlayerInfo* players_involved[2];
    Client* observers[MAX_OBSERVERS];
    unsigned int nb_observers;
 }Game;
