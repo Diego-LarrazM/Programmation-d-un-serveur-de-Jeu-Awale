@@ -33,7 +33,7 @@ static void end(void)
 
 // #region ////////////////////////////////////// - Game - ////////////////////////////////////////////////////////////////
 
-// #region Playing
+// #region Playing //
 void create_game(Client *client1, Client *client2, Bool private)
 {
    Game *game = (Game *)malloc(sizeof(Game));
@@ -48,27 +48,25 @@ void create_game(Client *client1, Client *client2, Bool private)
 Bool accept_challenge(Client *challenged)
 {
    Game *game = challenged->player->current_game;
-   PlayerInfo *player1 = game->clients_involved[0]->player;
-   PlayerInfo *player2 = game->clients_involved[1]->player;
-
-   if (player1->player_state != AWAITING_CHALLENGE)
-      return false; // Test: Player always ready (not disconected or timeout)
-   if (strcmp(player2->name, challenged->player->name))
-      return false; // Test: Challenged player wasn't challenged by this
-
-   player1->player_state = IN_GAME;
-   player2->player_state = IN_GAME;
+   game->clients_involved[0]->player->player_state = IN_GAME;
+   game->clients_involved[1]->player->player_state = IN_GAME;
    return true;
 }
 
 void end_game(Game *game)
 {
-   PlayerInfo *player1 = game->clients_involved[0]->player;
-   player1->player_state = IDLE;
-   player1->current_game = NULL;
-   PlayerInfo *player2 = game->clients_involved[1]->player;
-   player2->player_state = IDLE;
-   player2->current_game = NULL;
+   if(game->clients_involved[0])
+   {
+      PlayerInfo *player1 = game->clients_involved[0]->player;
+      player1->player_state = IDLE;
+      player1->current_game = NULL;
+   }
+   if(game->clients_involved[1])
+   {
+      PlayerInfo *player2 = game->clients_involved[1]->player;
+      player2->player_state = IDLE;
+      player2->current_game = NULL;
+   }
    for (int i = 0; i < game->nb_observers; ++i)
    {
       game->observers[i]->player->player_state = IDLE;
@@ -79,21 +77,15 @@ void end_game(Game *game)
    free(game);
 }
 
-void cancel_game(Client *client, const char *message)
-{
-   write_client(client->sock, message);
-   end_game(client->player->current_game);
-}
-
-void disconnect_players_from_game(Client * disconnected, const char * message)
-{
-   PlayerInfo* activePlayer = disconnected->player->current_game->clients_involved[0] == disconnected ? disconnected->player->current_game->clients_involved[1]->player : disconnected->player->current_game->clients_involved[0]->player;
+// void disconnect_players_from_game(Client * disconnected, const char * message)
+// {
+//    PlayerInfo* activePlayer = disconnected->player->current_game->clients_involved[0] == disconnected ? disconnected->player->current_game->clients_involved[1]->player : disconnected->player->current_game->clients_involved[0]->player;
    
-   end_game(disconnected->player->current_game);
-   remove_client(index_name_client(disconnected->player->name));
+//    end_game(disconnected->player->current_game);
+//    remove_client(index_name_client(disconnected->player->name));
 
-   write_client(activePlayer->client->sock, message);
-}
+//    write_client(activePlayer->client->sock, message);
+// }
 
 Bool make_move(Game *game, NumCase played_house)
 {
@@ -115,7 +107,7 @@ void continue_game(Game *game)
 {
    char message[300];
    // Print board and score
-   sprintf(message, "Score : %s : %d - %s : %d\n", game->clients_involved[0]->player->name, game->game_board->grainesJ1, game->clients_involved[1]->player->name, game->game_board->grainesJ2);
+   sprintf(message, "Score : %s : %d - %s : %d", game->clients_involved[0]->player->name, game->game_board->grainesJ1, game->clients_involved[1]->player->name, game->game_board->grainesJ2);
    write_client(game->clients_involved[0]->sock, message); // show score
    write_client(game->clients_involved[1]->sock, message);
    print_board_to(JOUEUR1, game, 0);
@@ -129,30 +121,31 @@ void continue_game(Game *game)
    // Test game end
    if (hasWon(game->game_board))
    {
-      sprintf(message, "Le joueur %s a gagné la partie!\n", game->clients_involved[game->game_board->joueurCourant - 1]->player->name);
+      sprintf(message, "Le joueur %s a gagné la partie!", game->clients_involved[game->game_board->joueurCourant - 1]->player->name);
       write_client(game->clients_involved[0]->sock, message);
       write_client(game->clients_involved[1]->sock, message);
+      for (int o = 0; o < game->nb_observers; o++)
+         write_client(game->observers[o]->sock, message);
       end_game(game);
       return;
    }
    if (isDraw(game->game_board))
    {
-      write_client(game->clients_involved[0]->sock, "Il y a égalité!\n");
-      write_client(game->clients_involved[1]->sock, "Il y a égalité!\n");
+      write_client(game->clients_involved[0]->sock, "Il y a égalité!");
+      write_client(game->clients_involved[1]->sock, "Il y a égalité!");
+      for (int o = 0; o < game->nb_observers; o++)
+         write_client(game->observers[o]->sock, "Il y a égalité!");
       end_game(game);
       return;
    }
    changePlayer(game->game_board);
 
    // print turn
-   sprintf(message, "Au tour de %s\n", game->clients_involved[game->game_board->joueurCourant - 1]->player->name);
+   sprintf(message, "Au tour de %s", game->clients_involved[game->game_board->joueurCourant - 1]->player->name);
    write_client(game->clients_involved[0]->sock, message);
    write_client(game->clients_involved[1]->sock, message);
    for (unsigned int o = 0; o < game->nb_observers; o++)
-   {
       write_client(game->observers[o]->sock, message);
-      print_board_to(OBSERVATEUR, game, o);
-   }
 
    // Print possible houses to pick for current player
    BitField_1o casesJouables = isOpponentFamished(game->game_board) ? playableFamine(game->game_board) : playable(game->game_board);
@@ -161,37 +154,36 @@ void continue_game(Game *game)
    sprintf(message, "Choissisez une case parmis: %s\n", casesJouablesStr);
    write_client(game->clients_involved[game->game_board->joueurCourant - 1]->sock, message);
 }
-// #endregion
+// #endregion Playing
 
-// #region OBSERVING
+// #region OBSERVING //
 Bool add_observer(Game *game, Client *observer)
 {
    if (game->nb_observers >= MAX_OBSERVERS)
       return false; // observer count must not be exceeded
-   printf("Observing new: %s, num actuel:%d\n", observer->player->name, game->nb_observers);
    observer->player->observer_index = game->nb_observers;
    observer->player->current_game = game;
-   printf("Nearly\n");
    game->observers[game->nb_observers++] = observer;
-   printf("oof!\n");
-   printf("new num:%d, observer:%s\n",game->nb_observers,  game->observers[observer->player->observer_index]->player->name);
+   observer->player->player_state = OBSERVING;
    return true;
 }
 
-Bool remove_observer(Client *observer)
+void remove_observer(Game *game, unsigned int o_index)
 {
-   Game *game = observer->player->current_game;
-   for (int o = observer->player->observer_index; o < game->nb_observers - 1; o++)
+   for (int o = o_index; o < game->nb_observers - 1; o++)
    {
       game->observers[o] = game->observers[o + 1];
    }
    --(game->nb_observers);
+}
+
+void quit_observing_game(Client *observer){
+   remove_observer(observer->player->current_game, observer->player->observer_index);
    observer->player->current_game = NULL;
    observer->player->observer_index = NON_OBSERVER;
    observer->player->player_state = IDLE;
-   return true;
 }
-// #endregion
+// #endregion Observing
 
 // #region Printing
 void bitfieldToString(Joueur JCourant, BitField_1o cases, char *buffer)
@@ -234,13 +226,13 @@ void print_board_to(Joueur dest, const Game* game, unsigned int ob_ind)
       write_client(game->observers[ob_ind]->sock, buffer);
    }
 }
-// #endregion
+// #endregion Printing
 
-// #endregion
+// #endregion Game
 
 // #region ////////////////////////////////////// - Client/Player Management - ////////////////////////////////////////////
 
-// #region Friends
+// #region Friends //
 void add_friend(PlayerInfo* player1, PlayerInfo* player2){
    player1->friends[player1->friend_count++] = player2;
    player2->friends[player2->friend_count++] = player1;
@@ -261,8 +253,9 @@ void decline_friend(Client* declined, const char* message){
    otherPlayer->asking_friends = NULL;
    
 }
-// #endregion
+// #endregion Friends
 
+// #region Utilities //
 void manage_timeout(Client *client, unsigned int duration, const State to_check, const char *message, void (*action)(Client *, const char *))
 {
    if (!fork())
@@ -302,13 +295,38 @@ Bool are_friend(const PlayerInfo* player1, const PlayerInfo* player2)
    return false;
 }
 
+void set_initial_player(PlayerInfo* player){
+   player->player_state = IDLE;
+   if(player->current_game)
+   {
+      if(player->observer_index != NON_OBSERVER)
+      {
+         quit_observing_game(player->client);
+      }
+      else{
+         end_game(player->current_game);
+         player->current_game = NULL;
+      }
+   }
+   player->observer_index = NON_OBSERVER;
+   player->client = NULL;
+   player->asking_friends = NULL;
+}
+// #endregion Utilities
+
+// #region lecture //
 static void write_client(SOCKET sock, const char *buffer)
 {
-   if (send(sock, buffer, strlen(buffer), 0) < 0)
+   unsigned int n = strlen(buffer) + strlen(CRLF) - 1;
+   char message[n];
+   strcpy(message, buffer);
+   strcat(message, CRLF);
+   if (send(sock, message, n, 0) < 0)
    {
       perror("send()");
       exit(errno);
    }
+   sleep_func(MESSAGE_TIME_INTERVAL);
 }
 
 
@@ -353,12 +371,13 @@ static int read_client(SOCKET sock, char *buffer)
 
    return n;
 }
-// #endregion
+// #endregion lecture
+
+// #endregion Client/player Management
 
 // #region ////////////////////////////////////// - Connexion Management - ////////////////////////////////////////////////
 
 static void disconnect_client(Client * client){
-   closesocket(client->sock);
    if(client->player->player_state == IN_GAME)
    {
       client->player->player_state = DISCONNECTED_FGAME;
@@ -368,9 +387,11 @@ static void disconnect_client(Client * client){
    }
    else
    {
-      client->player->client = NULL;
-      remove_client(index_name_client(client->player->name));
+      set_initial_player(client->player);
+      client->player->player_state = LOGGED_OUT;
    }
+   remove_client(index_name_client(client->player->name));
+   closesocket(client->sock);
 }
 
 static void clear_clients() ////////////////////////////////////////////////////////////////////////////////////////////// revoir if ingames sauvegarder
@@ -445,13 +466,13 @@ void read_request(Client *requester, const char *req)
    {
    // #region LOGOUT //WIP: question of quick command after logout//
    case LOGOUT: 
-      if (requester_state != IDLE)
-      {
-         send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
-         break; 
-      }
+      // if (requester_state != IDLE)
+      // {
+      //    send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
+      //    break; 
+      // }
          
-      disconnect_client(requester); // TO DO what if immediately a command is inputed after logout ?
+      disconnect_client(requester);
       break;
    // #endregion
    
@@ -501,13 +522,18 @@ void read_request(Client *requester, const char *req)
       req_player->player_state = AWAITING_CHALLENGE;
       ChallengeRequest *challenge_req = (ChallengeRequest *)request;
       int challenged_index = index_name_client(challenge_req->player_name); // index of challenged player
+      
+      if (challenged_index == actual_clients)
+      {
+         send_error_message(requester, "Error: Player doesn't exist.", IDLE);
+         break;
+      }
       Client *challenged_client = clients[challenged_index];
 
       // Tests
-      Bool challenged_not_exists = challenged_index == actual_clients;
       Bool challenged_occupied = challenged_client->player->player_state != IDLE;
 
-      if (challenged_not_exists || challenged_occupied)
+      if (challenged_occupied)
       {
          send_error_message(requester, "Error: Player is not available right now", IDLE);
          break;
@@ -516,7 +542,7 @@ void read_request(Client *requester, const char *req)
       // we prepare the game and inform the challenged player
       challenged_client->player->player_state = RESPONDING_CHALLENGE;
       char buffer[BUF_SIZE];
-      sprintf(buffer, "You have been challenged by %s.\n Type /accept to accept or /decline to refuse\n", req_player->name);
+      sprintf(buffer, "You have been challenged by %s.%s Type /accept to accept or /decline to refuse%s", req_player->name, CRLF, CRLF);
       write_client(challenged_client->sock, buffer);
 
       create_game(requester, challenged_client, challenge_req->private);
@@ -531,7 +557,6 @@ void read_request(Client *requester, const char *req)
          send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
          break; 
       }
-      req_player->player_state = LISTENING;
       MoveRequest *move_req = (MoveRequest *)request;
       Game *game = req_player->current_game;
 
@@ -540,16 +565,17 @@ void read_request(Client *requester, const char *req)
          if (make_move(game, move_req->played_house))
             continue_game(game);
          else
-            send_error_message(requester, "Error:Invalid House has been inputed. Please choose again.", UNDEFINED);
+            send_error_message(requester, "Error:Invalid House has been inputed. Please choose again.", requester_state);
       }
       else
-         send_error_message(requester, "Error: Please wait for your turn to play", UNDEFINED);
-      req_player->player_state = requester_state; // stops listening
+         send_error_message(requester, "Error: Please wait for your turn to play", requester_state);
+
       break;
    // #endregion
 
-   // #region FRIEND //WIP: way to remember friend request like game//
+   // #region FRIEND //
    case FRIEND: 
+      //Tests
       if (requester_state != IDLE)
       {
          send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
@@ -558,7 +584,6 @@ void read_request(Client *requester, const char *req)
       FriendRequest *friend_req = (FriendRequest *)request;
       unsigned int to_friend_player_index = index_name_client(friend_req->player_name);
 
-      //Error handling
       if (to_friend_player_index == actual_clients)
       {
          send_error_message(requester, "Error: Player doesn't exist.", IDLE);
@@ -599,11 +624,19 @@ void read_request(Client *requester, const char *req)
       switch (requester->player->player_state)
       {
       case RESPONDING_CHALLENGE:
+         if(!requester->player->current_game)
+         {
+            send_error_message(requester, "Player has disconnected.", IDLE);
+            break;
+         }
          if (response->validation && accept_challenge(requester))
+         {
             continue_game(req_player->current_game);
-         else {
-            write_client(requester->sock, "Game is cancelled.");
-            write_client(requester->player->current_game->clients_involved[0]->sock, "Game is cancelled.");
+         }
+         else 
+         {
+            write_client(requester->sock, "Game challenge was declined.");
+            write_client(requester->player->current_game->clients_involved[0]->sock, "Game challenge was declined.");
             end_game(requester->player->current_game);
          }
          break;
@@ -614,19 +647,19 @@ void read_request(Client *requester, const char *req)
          if (response->validation) {
             if (requester->player->friend_count >= MAX_FRIEND_COUNT || askingPlayer->friend_count >= MAX_FRIEND_COUNT) {
                send_error_message(requester, "Error: Max friend count achieved.", IDLE);
-               send_error_message(askingPlayer->client, "Error: Max friend count achieved.", IDLE);
+               if(askingPlayer->client) send_error_message(askingPlayer->client, "Error: Max friend count achieved.", IDLE);
                break;
             }
             if (are_friend(requester->player, askingPlayer)){
                send_error_message(requester, "Error: You are already friends.", IDLE);
-               send_error_message(askingPlayer->client, "Error: You are already friends.", IDLE);
+               if(askingPlayer->client) send_error_message(askingPlayer->client, "Error: You are already friends.", IDLE);
                break;
             }
             add_friend(requester->player, askingPlayer); 
             write_client(requester->sock, "Success: Friend added !");
-            write_client(askingPlayer->client->sock, "Success: Friend added !");
+            if(askingPlayer->client) write_client(askingPlayer->client->sock, "Success: Friend added !");
             requester->player->player_state = IDLE; // stops listening
-            askingPlayer->player_state = IDLE;
+            if(askingPlayer->player_state != LOGGED_OUT) askingPlayer->player_state = IDLE;
 
          }
          else decline_friend(askingPlayer->client, "Friend request was declined.");
@@ -658,7 +691,7 @@ void read_request(Client *requester, const char *req)
             if (req_player->friends[i]->client != NULL) // if friend connected
             {
                strcpy(ActivePlayerMessage, req_player->friends[i]->name);
-               strcat(ActivePlayerMessage, req_player->friends[i]->player_state == IDLE ? " : Ready" : (req_player->friends[i]->player_state == IN_GAME ? " : In Game" : " : -"));
+               strcat(ActivePlayerMessage, req_player->friends[i]->player_state == IDLE ? " : Ready" : ((req_player->friends[i]->player_state == IN_GAME) ? " : In Game" : " : -"));
                write_client(requester->sock, ActivePlayerMessage);
             }
          }
@@ -667,13 +700,12 @@ void read_request(Client *requester, const char *req)
       {
          for (int i = 0; i < actual_clients; ++i)
          {
-            Bool test_privacy = clients[i]->player->player_state == IN_GAME ? (!clients[i]->player->current_game->private || are_friend(clients[i]->player, requester->player)) : false;
             strcpy(ActivePlayerMessage, clients[i]->player->name);
-            strcat(ActivePlayerMessage, clients[i]->player->player_state == IDLE ? " : Ready" : ((clients[i]->player->player_state == IN_GAME && test_privacy) ? " : In Game" : " : -"));
+            strcat(ActivePlayerMessage, clients[i]->player->player_state == IDLE ? " : Ready" : ((clients[i]->player->player_state == IN_GAME && (!clients[i]->player->current_game->private || are_friend(clients[i]->player, requester->player))) ? " : In Game" : " : -"));
             write_client(requester->sock, ActivePlayerMessage);
          }
       }
-      req_player->player_state = requester_state; // stops listening
+      req_player->player_state = requester_state; // stops listening    
       break;
    // #endregion
 
@@ -687,7 +719,7 @@ void read_request(Client *requester, const char *req)
       req_player->player_state = LISTENING;
       SeeActiveGamesRequest *actives_games_req = (SeeActiveGamesRequest *)request;
       char ActiveGameMessage[2 * MAX_NAME_SIZE + sizeof(" versus ") + 1];
-      write_client(requester->sock, "<-- Active Games -->\n");
+      write_client(requester->sock, "<-- Active Games -->");
 
       if (actives_games_req->friends_only)
       {
@@ -717,7 +749,7 @@ void read_request(Client *requester, const char *req)
          }
       }
       req_player->player_state = requester_state; // stops listening
-      break;
+      break; 
    // #endregion
 
    // #region OBSERVE //WIP : test_privacy takes in account 1 player but not friend w both//
@@ -727,28 +759,42 @@ void read_request(Client *requester, const char *req)
          send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
          break; 
       }
-      req_player->player_state = LISTENING;
       ObserveRequest *observe_req = (ObserveRequest *)request;
 
-      int index_client_to_observe = index_name_client(challenge_req->player_name); // index du joueur qu'on veut observer (son jeu)
-      Game *game_to_observe = clients[index_client_to_observe]->player->current_game;
-
       // Tests
-      Bool test_game_exists = index_client_to_observe != actual_clients && clients[index_client_to_observe]->player->player_state == IN_GAME;
-      Bool test_privacy = !game_to_observe->private || are_friend(clients[index_client_to_observe]->player, requester->player);
+      int index_client_to_observe = index_name_client(observe_req->player_name); // index du joueur qu'on veut observer (son jeu)
+      if (index_client_to_observe == actual_clients){
+         send_error_message(requester, "Error: No such player.", IDLE);
+         break;
+      }
 
-      if (test_game_exists && test_privacy)
+      Game *game_to_observe = clients[index_client_to_observe]->player->current_game;
+      Bool test_game_exists = clients[index_client_to_observe]->player->player_state == IN_GAME;
+      if(! test_game_exists)
       {
-         if (add_observer(clients[index_client_to_observe]->player->current_game, requester))
-            req_player->player_state = OBSERVING;
+         send_error_message(requester, "Error: No game to observe", IDLE);
+         break;
+      } 
+      
+      Bool test_privacy = !game_to_observe->private || (are_friend(game->clients_involved[0]->player, requester->player) && are_friend(game->clients_involved[1]->player, requester->player));
+      if (test_privacy)
+      {
+         if (add_observer(clients[index_client_to_observe]->player->current_game, requester)) {
+            char message[300];
+            sprintf(message, "Score : %s : %d - %s : %d", game_to_observe->clients_involved[0]->player->name, game_to_observe->game_board->grainesJ1, game_to_observe->clients_involved[1]->player->name, game_to_observe->game_board->grainesJ2);
+            write_client(requester->sock, message); //score
+            print_board_to(OBSERVATEUR, game_to_observe, req_player->observer_index); // board
+            sprintf(message, "Au tour de %s", game_to_observe->clients_involved[game_to_observe->game_board->joueurCourant - 1]->player->name);
+            write_client(requester->sock, message); //turn
+         }
          else
          {
-            send_error_message(requester, "Error: Max observer limit achieved in game", IDLE); // stops listening
+            send_error_message(requester, "Error: Max observer limit achieved in game", IDLE);
          }
       }
       else
       {
-         send_error_message(requester, "Error: No game to observe", IDLE); // stops listening
+         send_error_message(requester, "Error: No game to observe", IDLE);
       }
       break;
    // #endregion
@@ -761,14 +807,9 @@ void read_request(Client *requester, const char *req)
          break; 
       }
       req_player->player_state = LISTENING;
-      if (remove_observer(requester))
-      {
-         write_client(requester->sock, "Success: Quitted game");
-      }
-      else
-      {
-         send_error_message(requester, "Error: error when trying to quit", requester_state); // stops listening
-      }
+      quit_observing_game(requester);
+      write_client(requester->sock, "Success: Quitted game");
+      
       break;
    // #endregion
 
@@ -778,6 +819,7 @@ void read_request(Client *requester, const char *req)
       req_player->player_state = requester_state; // stops listening
       break;
    }
+   write_client(requester->sock, CRLF);
 }
 // #endregion
 
@@ -852,12 +894,10 @@ static void app(void)
 
          /* Player connexion */
          PlayerInfo* p = (PlayerInfo*) malloc(sizeof(PlayerInfo));
-         p->player_state = IDLE;
-         p->observer_index = NON_OBSERVER;
-         p->current_game = NULL;
          p->friend_count = 0;
-         p->client = NULL;
-         p->asking_friends = NULL;
+         p->current_game = NULL;
+         set_initial_player(p);
+         
 
          strncpy(p->name, buffer, MAX_NAME_SIZE - 1); /////////////// TO DO : à vérifier + BIO !!!!
          strncpy(p->password, buffer, MAX_PASSWORD_SIZE - 1);
@@ -877,6 +917,7 @@ static void app(void)
             else { // player exists
                free(p);
                p = players[index_player];
+               p->player_state = IDLE;
             }
          }
 
@@ -886,32 +927,36 @@ static void app(void)
 
          // Player connexion
          int index_client = index_name_client(p->name);
-         if (index_client != actual_clients && clients[index_client]->player->player_state != DISCONNECTED_FGAME) // client already connected ?
+         if (index_client != actual_clients) // client already connected ?
+         {
+            closesocket(csock);
+            free(c);
             continue;
-         if (index_client == actual_clients) // not connected ?
+         }
+         else // new client
          {
             clients[actual_clients] = c;
             p->client = c;
             ++actual_clients;
             /* what is the new maximum fd ? */
             max = csock > max ? csock : max;
-
             FD_SET(csock, &rdfs);
+            if(p->player_state == DISCONNECTED_FGAME) // disconected forcibly from game and timeout still active
+            { 
+               p->player_state = IN_GAME; 
+               write_client(c->sock, "Welcome back!");
+               Game* game = p-> current_game;
+               Joueur absent_player = game->clients_involved[0] ? JOUEUR2 : JOUEUR1;
+               game->clients_involved[absent_player - 1] = c;
+               // We re-inform of game state
+               print_board_to(absent_player, game, 0);
+               
+               // We inform the other player
+               Client* other_client = clients[index_client] == game->clients_involved[0] ? game->clients_involved[1] : game->clients_involved[0];
+               write_client(other_client->sock, "Player reconnected !");
+            }
          }
-         else // disconected forcibly from game and timeout still active
-         { 
-            clients[index_client]->sock = csock;
-            clients[index_client]->player->player_state = IN_GAME; 
-            write_client(clients[index_client]->sock, "Welcome back!");
-            Game* game = clients[index_client]->player-> current_game;
-            // We re-inform of game state
-            print_board_to(clients[index_client] == game->clients_involved[0] ? JOUEUR1 : JOUEUR2, game, 0);
-            
-            // We inform the other player
-            Client* other_client = clients[index_client] == game->clients_involved[0] ? game->clients_involved[1] : game->clients_involved[0];
-            write_client(other_client->sock, "Player reconnected !");
-         }
-
+         
       }
       else
       {

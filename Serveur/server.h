@@ -23,6 +23,7 @@ static void remove_client(int to_remove);
 static void clear_clients();
 static void clear_players();
 void manage_timeout(Client *client, unsigned int duration, const State to_check, const char *message, void (*action)(Client *, const char *));
+void set_initial_player(PlayerInfo* player);
 
 int index_name_client(const char name[MAX_NAME_SIZE]);
 int index_name_player(const char name[MAX_NAME_SIZE]);
@@ -35,14 +36,14 @@ void read_request(Client *requester, const char *req);
 void create_game(Client *client1, Client *client2, Bool private);
 Bool accept_challenge(Client* challenged);
 Bool add_observer(Game* game, Client* observer);
-Bool remove_observer(Client* observer);
+void remove_observer(Game *game, unsigned int o_index);
+void quit_observing_game(Client *observer);
 void bitfieldToString(Joueur JCourant, BitField_1o cases, char* buffer);
 void print_board_to(Joueur dest, const Game* game, unsigned int ob_ind);
 void continue_game(Game* game);
 Bool make_move(Game* game, NumCase played_house);
 Bool is_current_player(const Game* game, const Client* client);
 void end_game(Game* game);
-void cancel_game(Client* client, const char* message);
 void disconnect_players_from_game(Client * disconnected, const char * message);
 
 #endif /* guard */
