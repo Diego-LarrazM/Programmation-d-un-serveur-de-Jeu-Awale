@@ -73,15 +73,18 @@ void end_game(Game *game)
    free(game);
 }
 
-// void disconnect_players_from_game(Client * disconnected, const char * message)
-// {
-//    PlayerInfo* activePlayer = disconnected->player->current_game->clients_involved[0] == disconnected ? disconnected->player->current_game->clients_involved[1]->player : disconnected->player->current_game->clients_involved[0]->player;
-   
-//    end_game(disconnected->player->current_game);
-//    remove_client(index_name_client(disconnected->player->name));
+void* disconnect_players_from_game(void* arg)
+{
+   Timeout* time_out = (Timeout*) arg;
+   sleep_func(time_out->duration);
+   if (time_out->player->player_state == time_out->to_check && time_out->player->current_game){
+      end_game(time_out->player->current_game);
 
-//    write_client(activePlayer->client->sock, message);
-// }
+      if (time_out->player->client)
+         write_client(time_out->player->client->sock, time_out->message);
+   }
+   free(time_out);
+}
 
 Bool make_move(Game *game, NumCase played_house)
 {
@@ -238,17 +241,28 @@ void add_friend(PlayerInfo* player1, PlayerInfo* player2){
    player2->friends[player2->friend_count++] = player1;
 }
 
-void decline_friend(Client* declined, const char* message){
-   PlayerInfo* declinedPlayer = declined->player;
-   PlayerInfo* otherPlayer = declined->player->asking_friends;
 
-   declined->player->player_state = IDLE;
-   declined->player->asking_friends = NULL;
-   write_client(declinedPlayer->client->sock, message);
+void* decline_friend_timeout(void* arg) {
+   Timeout* time_out = (Timeout*) arg;
+   sleep_func(time_out->duration);
+   if (time_out->player->player_state == time_out->to_check)
+      decline_friend(time_out->player, time_out->message);
+   free(time_out);
+}
+
+
+void decline_friend(PlayerInfo* declined, const char* message){
+   PlayerInfo* otherPlayer = declined->asking_friends;
+
+   declined->player_state = IDLE;
+   declined->asking_friends = NULL;
+   if (declined->client)
+      write_client(declined->client->sock, message);
 
    if(otherPlayer->player_state == RESPONDING_FRIEND){
       otherPlayer->player_state = IDLE;
-      write_client(otherPlayer->client->sock, message);
+      if (otherPlayer->client)
+         write_client(otherPlayer->client->sock, message);
    }  
    otherPlayer->asking_friends = NULL;
    
@@ -256,18 +270,34 @@ void decline_friend(Client* declined, const char* message){
 // #endregion Friends
 
 // #region Utilities //
-// void manage_timeout(Client *client, unsigned int duration, const State to_check, const char *message, void (*action)(Client *, const char *))
-// {
-//    if (!fork())
-//    {
-//       sleep(5);
-//       if (client->player->player_state == to_check){
-//          action(client, message);
-//       }
+void manage_timeout(PlayerInfo *player, const State to_check, const char *message, void* (*action)(void *))
+{
+   Timeout* time_out = (Timeout*) malloc(sizeof(Timeout));
+   time_out->player = player;
+   time_out->duration = STD_TIMEOUT_DURATION;
+   time_out->to_check = to_check;
+
+   if (pthread_create(&time_out->thread, NULL, action, time_out) != 0) {
+        perror("Failed to create thread");
+        return;
+    }
+
+    if (pthread_detach(time_out->thread) != 0) {
+        perror("Failed to detach thread");
+        return;
+    }
+/*
+   if (!fork())
+   {
+      sleep(5);
+      if (client->player->player_state == to_check){
+         action(client, message);
+      }
         
-//       exit(0);
-//    }
-// }
+      exit(0);
+   }
+*/
+}
 
 int index_name_client(const char name[MAX_NAME_SIZE])
 {
@@ -386,7 +416,7 @@ static void disconnect_client(Client * client){
       if(other_player->player_state == IN_GAME) 
       {
          write_client(other_player->client->sock, "Player disconnected, waiting 30 seconds...");
-         //manage_timeout(client, 30, DISCONNECTED_FGAME, "Player disconnected. Game is cancelled", disconnect_players_from_game); // client left as a zombie for 30s
+         manage_timeout(client->player, DISCONNECTED_FGAME, "Player disconnected. Game is cancelled", disconnect_players_from_game); // client left as a zombie for 30s
       }
       else
       { // case where both players disconnected
@@ -553,7 +583,7 @@ void read_request(Client *requester, const char *req)
       write_client(challenged_client->sock, buffer);
 
       create_game(requester, challenged_client, challenge_req->private);
-      //manage_timeout(requester, 30, AWAITING_CHALLENGE, "Challenge timeout. Game cancelled", cancel_game);
+      manage_timeout(req_player, AWAITING_CHALLENGE, "Challenge timeout. Game cancelled", disconnect_players_from_game);
       break;
    // #endregion 
 
@@ -630,7 +660,7 @@ void read_request(Client *requester, const char *req)
       
       write_client(to_friend->client->sock, friend_request_msg);  
       write_client(requester->sock, "Sent friend request."); 
-      //manage_timeout(requester, 30, AWAITING_FRIEND, "Timeout: Friend request.", decline_friend);
+      manage_timeout(req_player, AWAITING_FRIEND, "Timeout: Friend request.", decline_friend_timeout);
       break;
    // #endregion
 
@@ -680,7 +710,7 @@ void read_request(Client *requester, const char *req)
             if(askingPlayer->player_state != LOGGED_OUT) askingPlayer->player_state = IDLE;
 
          }
-         else decline_friend(askingPlayer->client, "Friend request was declined.");
+         else decline_friend(askingPlayer, "Friend request was declined.");
          break;
 
       default:
@@ -900,7 +930,7 @@ static void app(void)
          /* new client */
          SOCKADDR_IN csin = {0};
          size_t sinsize = sizeof csin;
-         int csock = accept(sock, (SOCKADDR *)&csin, &sinsize);
+         int csock = accept(sock, (SOCKADDR *)&csin, (socklen_t*) &sinsize);
          if (csock == SOCKET_ERROR)
          {
             perror("accept()");
