@@ -262,6 +262,13 @@ void add_friend(PlayerInfo* player1, PlayerInfo* player2){
    player2->friends[player2->friend_count++] = player1;
 }
 
+Bool are_friend(const PlayerInfo* player1, const PlayerInfo* player2)
+{
+   for (int i = 0; i < player1->friend_count; ++i)
+      if (player1->friends[i] == player2)
+         return true;
+   return false;
+}
 
 void* decline_friend_timeout(void* arg) {
    Timeout* time_out = (Timeout*) arg;
@@ -291,25 +298,6 @@ void decline_friend(PlayerInfo* declined, const char* message){
 // #endregion Friends
 
 // #region Utilities //
-void manage_timeout(PlayerInfo *player, const State to_check, const char *message, void* (*action)(void *))
-{
-   Timeout* time_out = (Timeout*) malloc(sizeof(Timeout));
-   time_out->player = player;
-   time_out->duration = STD_TIMEOUT_DURATION;
-   time_out->to_check = to_check;
-   strcpy(time_out->message, message);
-
-   if (pthread_create(&time_out->thread, NULL, action, time_out) != 0) {
-        perror("Failed to create thread");
-        return;
-    }
-
-    if (pthread_detach(time_out->thread) != 0) {
-        perror("Failed to detach thread");
-        return;
-    }
-}
-
 int index_name_client(const char name[MAX_NAME_SIZE])
 {
    int i;
@@ -326,14 +314,6 @@ int index_name_player(const char name[MAX_NAME_SIZE])
       if (strcmp(players[i]->name, name) == 0)
          break;
    return i;
-}
-
-Bool are_friend(const PlayerInfo* player1, const PlayerInfo* player2)
-{
-   for (int i = 0; i < player1->friend_count; ++i)
-      if (player1->friends[i] == player2)
-         return true;
-   return false;
 }
 
 void set_initial_player(PlayerInfo* player){
@@ -417,6 +397,25 @@ static int read_client(SOCKET sock, char *buffer)
 // #endregion Client/player Management
 
 // #region ////////////////////////////////////// - Connexion Management - ////////////////////////////////////////////////
+
+void manage_timeout(PlayerInfo *player, const State to_check, const char *message, void* (*action)(void *))
+{
+   Timeout* time_out = (Timeout*) malloc(sizeof(Timeout));
+   time_out->player = player;
+   time_out->duration = STD_TIMEOUT_DURATION;
+   time_out->to_check = to_check;
+   strcpy(time_out->message, message);
+
+   if (pthread_create(&time_out->thread, NULL, action, time_out) != 0) {
+        perror("Failed to create thread");
+        return;
+    }
+
+    if (pthread_detach(time_out->thread) != 0) {
+        perror("Failed to detach thread");
+        return;
+    }
+}
 
 static void disconnect_client(Client * client){
    int index_client = index_name_client(client->player->name);
