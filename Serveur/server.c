@@ -18,6 +18,7 @@ static void init(void)
       exit(EXIT_FAILURE);
    }
 
+// for ubuntu "__linux__" instead of "linux"
 #elif defined(__linux__) || defined(linux)
    signal(SIGCHLD,SIG_IGN);
 
