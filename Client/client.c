@@ -238,15 +238,17 @@ void delete_request(ClientRequest* request){
 }
 
 
-static void app(const char *address, const char *name)
+static void app(const char *address, const char *name, const char *password)
 {
    SOCKET sock = init_connection(address);
    char buffer[BUF_SIZE];
 
    fd_set rdfs;
 
-   /* send our name */
-   write_server(sock, name);
+   sprintf(buffer, "%s %s", name, password);
+
+   /* send our name & password */
+   write_server(sock, buffer);
 
    while(1)
    {
@@ -374,15 +376,15 @@ static void write_server_request(SOCKET sock, const ClientRequest *request)
 
 int main(int argc, char **argv)
 {
-   if(argc < 2)
+   if(argc < 3)
    {
-      printf("Usage : %s [address] [pseudo]\n", argv[0]);
+      printf("Usage : %s [address] [pseudo] [password]\n", argv[0]);
       return EXIT_FAILURE;
    }
 
    init();
 
-   app(argv[1], argv[2]);
+   app(argv[1], argv[2], argv[3]);
 
    end();
 

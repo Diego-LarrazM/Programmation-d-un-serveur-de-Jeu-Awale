@@ -749,7 +749,6 @@ void read_request(Client *requester, const char *req)
             Game* game = req_player->friends[i]->current_game;
             if(game->players_involved[0] != req_player->friends[i]) continue; // not requester
 
-            Game* game = req_player->friends[i]->current_game;
             strcpy(ActiveGameMessage, game->players_involved[0]->name);
             strcat(ActiveGameMessage, " versus ");
             strcat(ActiveGameMessage, game->players_involved[1]->name);
@@ -915,7 +914,7 @@ static void app(void)
             continue;
          }
 
-         /* after connecting the client sends its name */
+         /* after connecting the client sends its name & password */
          if (read_client(csock, buffer) == -1)
          {
             /* disconnected */
@@ -928,9 +927,11 @@ static void app(void)
          p->current_game = NULL;
          set_initial_player(p);
          
+         char* spacePtr = strchr(buffer, ' ');
+         *spacePtr = '\0';
 
          strncpy(p->name, buffer, MAX_NAME_SIZE - 1); ////////////////////////////////////////////////////////////////////// TO DO: BIO + password !!!!
-         strncpy(p->password, buffer, MAX_PASSWORD_SIZE - 1);
+         strncpy(p->password, spacePtr + 1, MAX_PASSWORD_SIZE - 1);
 
          int index_player = index_name_player(p->name);
          if (index_player == actual_players && actual_players != MAX_PLAYER_COUNT) // New Player
@@ -947,6 +948,7 @@ static void app(void)
          else
          {
             if (strcmp(players[index_player]->password, p->password) != 0) { // Wrong password
+               write_client(csock, "Wrong password, please try again.");
                free(p);
                closesocket(csock);
                continue;
