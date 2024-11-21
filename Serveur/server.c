@@ -56,11 +56,11 @@ Bool accept_challenge(Client *challenged)
 void end_game(Game *game)
 {
    PlayerInfo *player1 = game->players_involved[0];
-   player1->player_state = player1->player_state == IN_GAME ? IDLE : LOGGED_OUT;
+   player1->player_state = (player1->player_state == IN_GAME || player1->player_state == AWAITING_CHALLENGE) ? IDLE : LOGGED_OUT;
    player1->current_game = NULL;
 
    PlayerInfo *player2 = game->players_involved[1];
-   player2->player_state = player2->player_state == IN_GAME ? IDLE : LOGGED_OUT;
+   player2->player_state = (player2->player_state == IN_GAME || player2->player_state == RESPONDING_CHALLENGE) ? IDLE : LOGGED_OUT;
    player2->current_game = NULL;
 
    for (int i = 0; i < game->nb_observers; ++i)
@@ -276,6 +276,7 @@ void manage_timeout(PlayerInfo *player, const State to_check, const char *messag
    time_out->player = player;
    time_out->duration = STD_TIMEOUT_DURATION;
    time_out->to_check = to_check;
+   strcpy(time_out->message, message);
 
    if (pthread_create(&time_out->thread, NULL, action, time_out) != 0) {
         perror("Failed to create thread");
@@ -408,6 +409,7 @@ static int read_client(SOCKET sock, char *buffer)
 // #region ////////////////////////////////////// - Connexion Management - ////////////////////////////////////////////////
 
 static void disconnect_client(Client * client){
+   int index_client = index_name_client(client->player->name);
    if(client->player->player_state == IN_GAME)
    {
       client->player->player_state = DISCONNECTED_FGAME;
@@ -429,7 +431,7 @@ static void disconnect_client(Client * client){
       set_initial_player(client->player);
       client->player->player_state = LOGGED_OUT;
    }
-   remove_client(index_name_client(client->player->name));
+   remove_client(index_client);
    closesocket(client->sock);
 }
 
@@ -628,6 +630,10 @@ void read_request(Client *requester, const char *req)
          break; 
       }
       FriendRequest *friend_req = (FriendRequest *)request;
+      if (strcmp(req_player->name, friend_req->player_name) == 0){
+         send_error_message(requester, "Error: Don't self friend, it ends up ugly.", IDLE);
+         break;
+      }
       unsigned int to_friend_player_index = index_name_client(friend_req->player_name);
 
       if (to_friend_player_index == actual_clients)
@@ -878,7 +884,8 @@ void read_request(Client *requester, const char *req)
       req_player->player_state = requester_state; // stops listening
       break;
    }
-   write_client(requester->sock, CRLF);
+   if(request->signature != LOGOUT)
+      write_client(requester->sock, CRLF);
 }
 // #endregion
 
@@ -998,6 +1005,7 @@ static void app(void)
          int index_client = index_name_client(p->name);
          if (index_client != actual_clients) // client already connected ?
          {
+            write_client(csock, "Already connected with another terminal.");
             closesocket(csock);
             free(c);
             continue;
@@ -1024,6 +1032,8 @@ static void app(void)
                SOCKET other_client_sock = game->players_involved[(this_player)%2]->client->sock;
                write_client(other_client_sock, "Player reconnected !");
             }
+            else
+               write_client(c->sock, "Connected to the server");
          }
          
       }

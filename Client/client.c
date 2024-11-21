@@ -286,7 +286,12 @@ static void app(const char *address, const char *name, const char *password)
          ClientRequest* request = create_request(buffer);
          if (request->size != 0)
             write_server_request(sock, request);
-         delete_request(request);
+         if (request->signature == LOGOUT){
+            delete_request(request);
+            return;
+         }
+         else
+            delete_request(request);
       }
       else if(FD_ISSET(sock, &rdfs))
       {
