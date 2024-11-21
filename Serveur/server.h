@@ -2,8 +2,6 @@
 #define SERVER_H
 
 #include "server_client.h"
-#include "../Libraries/request.h"
-#include <pthread.h>
 
 static Client* clients[MAX_CLIENTS];
 static int actual_clients;
@@ -58,5 +56,8 @@ void end_game(Game* game);
 
 void* decline_friend_timeout(void* arg);
 void* disconnect_players_from_game(void* arg);
+
+void set_bio_player(PlayerInfo* player, char* bio);
+void write_profile(Client* client);
 
 #endif /* guard */

@@ -1,10 +1,10 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
-#include "stdvars.h"
 #include "network.h"
+#include "stdvars.h"
 
-typedef enum  {LOGOUT = 0, PROFILE = 1, MESSAGE = 2, CHALLENGE = 3, PLAY = 4, MOVE = 5, FRIEND = 6, RESPOND = 7, ACTIVE_PLAYERS = 8, ACTIVE_GAMES = 9, OBSERVE = 10, QUIT = 11} RequestSignature;
+typedef enum  {LOGOUT = 0, PROFILE = 1, MESSAGE = 2, CHALLENGE = 3, PLAY = 4, MOVE = 5, FRIEND = 6, RESPOND = 7, ACTIVE_PLAYERS = 8, ACTIVE_GAMES = 9, OBSERVE = 10, QUIT = 11, SET_BIO} RequestSignature;
 typedef enum  {FRIEND_RESPOND = 0, CHALLENGE_RESPONSE = 1} ResponseType;
 
 typedef struct {
@@ -26,6 +26,7 @@ Active_players  8          0 (all) 1 (friends only)
 Active_games    9          0 (all) 1 (friends only)
 Observe         10         gameName
 Quit            11         exit state (game played or observed)
+set_Bio         12         change bio
 */
 
 typedef struct {
@@ -111,6 +112,13 @@ typedef struct {
    char player_name[MAX_NAME_SIZE]; 
    //char excess[BUF_SIZE - 4 - MAX_NAME_SIZE]; 
 }ObserveRequest;
+
+typedef struct {
+   RequestSignature signature: 16;
+   unsigned int size: 16; 
+   char bio[MAX_BIO_SIZE]; 
+   //char excess[BUF_SIZE - 4 - MAX_BIO_SIZE]; 
+}SetBioRequest;
 
 
 #endif /* guard */

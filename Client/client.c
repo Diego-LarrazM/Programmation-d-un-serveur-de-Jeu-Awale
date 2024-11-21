@@ -28,6 +28,7 @@ static void end(void)
 
 ClientRequest* create_request(const char* buffer){
    ClientRequest* request = (ClientRequest*) malloc(sizeof(ClientRequest));
+   request->signature = MESSAGE;
    request->size = 0;
    char command[50]; // To store the part after '/'
    char rest[BUF_SIZE - 52];    // To store the part after the first space
@@ -54,7 +55,6 @@ ClientRequest* create_request(const char* buffer){
          printf("/logout                              : to quit the server\n");
          printf("/msg <player-name> <message-content> : to send a private message\n");
          printf("/challenge <player-name>             : to challenge a friend\n");
-         printf("/play [online, private]              : to play against a bot or a player, privately or not\n");
          printf("/move <house-number>                 : to choose a move to play\n");
          printf("/friend <player-name>                : to add a friend\n");
          printf("/accept                              : to accept a request\n");
@@ -102,6 +102,7 @@ ClientRequest* create_request(const char* buffer){
          char private[BUF_SIZE - 53];
          if (sSpacePtr != NULL) {
             *sSpacePtr = '\0';
+            strcpy(rest, spacePtr + 1);
             strcpy(private, sSpacePtr + 1);
          }
          request->signature = CHALLENGE;
@@ -116,35 +117,6 @@ ClientRequest* create_request(const char* buffer){
          }
          strcpy(challenge_request->player_name, rest);
          challenge_request->size = 2 + 2 + 1 + MAX_NAME_SIZE;
-      }
-      else if (strcmp(command, "play") == 0) {
-         request->signature = PLAY;
-         PlayRequest* play_request = (PlayRequest*) request;
-         play_request->online = false;
-         play_request->private = false;
-         char *sSpacePtr = strchr(spacePtr + 1, ' ');
-         if (sSpacePtr != NULL) {
-            *sSpacePtr = '\0';
-            char param[BUF_SIZE - 6];
-            strcpy(param, sSpacePtr + 1);
-            if (strcmp(param, "private") == 0)
-               play_request->private = true;
-            else if (strcmp(param, "online") == 0)
-               play_request->online = true;
-            else if (param[0] != '\0') {
-               printf("To use the /play command, you need to indicate if you to play offline (with a bot) or on online, and if you want to have the game in private (they must be seperated with a space bar).\n/play [online, private]\n");
-               return request;
-            }
-         }
-         if (strcmp(rest, "private") == 0)
-            play_request->private = true;
-         else if (strcmp(rest, "online") == 0)
-            play_request->online = true;
-         else {
-            printf("To use the /play command, you need to indicate if you to play offline (with a bot) or on online, and if you want to have the game in private (they must be seperated with a space bar).\n/play [online, private]\n");
-            return request;
-         }
-         play_request->size = 2 + 2 + 1 + 1;
       }
       else if (strcmp(command, "move") == 0) {
          request->signature = MOVE;
@@ -179,7 +151,7 @@ ClientRequest* create_request(const char* buffer){
       response_request->validation = false;
       request->size = 2 + 2 + 1;
       }
-      else if (strcmp(command, "who") == 0) { ///////////
+      else if (strcmp(command, "who") == 0) { 
          request->signature = ACTIVE_PLAYERS;
          SeeActivePlayersRequest* player_request = (SeeActivePlayersRequest*) request;
          if (strcmp(rest, "friend") == 0)
@@ -192,7 +164,7 @@ ClientRequest* create_request(const char* buffer){
          }
          request->size = 2 + 2 + 1;
       }
-      else if (strcmp(command, "games") == 0) { //////////
+      else if (strcmp(command, "games") == 0) { 
          request->signature = ACTIVE_GAMES;
          SeeActiveGamesRequest* games_request = (SeeActiveGamesRequest*) request;
          if (strcmp(rest, "friend") == 0)

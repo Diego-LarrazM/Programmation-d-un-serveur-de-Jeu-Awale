@@ -1,8 +1,6 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "../Libraries/network.h"
-#include "../Libraries/stdvars.h"
 #include "../Libraries/request.h"
 
 static void init(void);

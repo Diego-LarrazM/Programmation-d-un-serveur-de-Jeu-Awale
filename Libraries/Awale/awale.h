@@ -12,15 +12,8 @@
 #define NB_CASES 12
 
 typedef unsigned char Graines;
-typedef unsigned char BitField_1o; /* Bitfield d'un octet où les bits de 1 à 6 correspondent aux cases 7-12(Joueur1) ou 1-6 (Joueur2 respectivement)
-JOUEUR2(case)  :  6  5  4  3  2  1
-JOUEUR1(case)  : 12 11 10  9  8  7
-BITFIELD(bit)  : b6 b5 b4 b3 b2 b1
-*/
-
 typedef enum {OBSERVATEUR = 0, JOUEUR1 = 1, JOUEUR2 = 2} Joueur;
 typedef enum {AHORAIRE = -1, HORAIRE = 1} Sens;
-
 
 typedef struct plateau{
     Graines cases[NB_CASES]; // plateau avec ranges[i] le nombre de graines dans la case i+1. Le joueur 1 a les cases 7-12 et le joueur 2 1-6

@@ -2,9 +2,11 @@
 #define SERVER_CLIENT_H
 
 
-#include "../Libraries/stdvars.h"
-#include "../Libraries/network.h"
 #include "../Libraries/Awale/awale.h"
+#include "../Libraries/request.h"
+//#include "../Libraries/stdvars.h"
+//#include "../Libraries/network.h"
+#include <pthread.h>
 
 #define NON_OBSERVER (MAX_OBSERVERS + 1)
 
@@ -24,11 +26,11 @@ AWAITING_FRIEND = 7,
 RESPONDING_FRIEND = 8
 } State;
 
-struct struct_Client;
-struct struct_Player;
-struct struct_Game;
+struct struct_client;
+struct struct_player;
+struct struct_game;
 
-typedef struct struct_Player
+typedef struct struct_player
 {
    char bio[MAX_BIO_SIZE];
    char name[MAX_NAME_SIZE];
@@ -37,22 +39,22 @@ typedef struct struct_Player
    State player_state;
    unsigned int observer_index;
 
-   struct struct_Player* friends[MAX_PLAYER_COUNT];
+   struct struct_player* friends[MAX_PLAYER_COUNT];
    unsigned int friend_count;
-   struct struct_Player* asking_friends;
+   struct struct_player* asking_friends;
 
-   struct struct_Client* client;
-   struct struct_Game* current_game;
+   struct struct_client* client;
+   struct struct_game* current_game;
 
 }PlayerInfo;
 
-typedef struct struct_Client
+typedef struct struct_client
 {
    SOCKET sock;
    PlayerInfo* player;
 }Client;
 
-typedef struct struct_Game
+typedef struct struct_game
 {
    Bool private;
    Plateau* game_board;
@@ -60,6 +62,5 @@ typedef struct struct_Game
    Client* observers[MAX_OBSERVERS];
    unsigned int nb_observers;
 }Game;
-
 
 #endif /* guard */

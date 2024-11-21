@@ -55,6 +55,7 @@ Bool accept_challenge(Client *challenged)
 
 void end_game(Game *game)
 {
+   // Reinitialize states
    PlayerInfo *player1 = game->players_involved[0];
    player1->player_state = (player1->player_state == IN_GAME || player1->player_state == AWAITING_CHALLENGE) ? IDLE : LOGGED_OUT;
    player1->current_game = NULL;
@@ -69,6 +70,8 @@ void end_game(Game *game)
       game->observers[i]->player->current_game = NULL;
       game->observers[i]->player->observer_index = NON_OBSERVER;
    }
+
+   // Destroy game
    endGame(game->game_board);
    free(game);
 }
@@ -78,10 +81,11 @@ void* disconnect_players_from_game(void* arg)
    Timeout* time_out = (Timeout*) arg;
    sleep_func(time_out->duration);
    if (time_out->player->player_state == time_out->to_check && time_out->player->current_game){
+      PlayerInfo* otherPlayer = time_out->player == time_out->player->current_game->players_involved[0] ? time_out->player->current_game->players_involved[1] : time_out->player->current_game->players_involved[0];
       end_game(time_out->player->current_game);
 
-      if (time_out->player->client)
-         write_client(time_out->player->client->sock, time_out->message);
+      if (otherPlayer->client)
+         write_client(otherPlayer->client->sock, time_out->message);
    }
    free(time_out);
 }
@@ -142,6 +146,7 @@ void continue_game(Game *game)
       return;
    }
    changePlayer(game->game_board);
+   current_player = game->players_involved[game->game_board->joueurCourant - 1];
 
    // print turn
    sprintf(message, "Au tour de %s", current_player->name);
@@ -235,6 +240,21 @@ void print_board_to(Joueur dest, const Game* game, unsigned int ob_ind)
 
 // #region ////////////////////////////////////// - Client/Player Management - ////////////////////////////////////////////
 
+// #region Profile //
+void set_bio_player(PlayerInfo* player, char* bio)
+{
+   strcpy(player->bio, bio);
+}
+
+void write_profile(Client* client)
+{
+   char buffer[BUF_SIZE];
+   sprintf(buffer, "<-- Profile -->%s<- Nom:  %s ->%s<- Bio ->%s%s", CRLF, client->player->name, CRLF, CRLF, client->player->bio);
+   write_client(client->sock, buffer);
+}
+
+// #endregion Profile
+
 // #region Friends //
 void add_friend(PlayerInfo* player1, PlayerInfo* player2){
    player1->friends[player1->friend_count++] = player2;
@@ -287,17 +307,6 @@ void manage_timeout(PlayerInfo *player, const State to_check, const char *messag
         perror("Failed to detach thread");
         return;
     }
-/*
-   if (!fork())
-   {
-      sleep(5);
-      if (client->player->player_state == to_check){
-         action(client, message);
-      }
-        
-      exit(0);
-   }
-*/
 }
 
 int index_name_client(const char name[MAX_NAME_SIZE])
@@ -345,7 +354,7 @@ void set_initial_player(PlayerInfo* player){
 }
 // #endregion Utilities
 
-// #region lecture //
+// #region Lecture //
 static void write_client(SOCKET sock, const char *buffer)
 {
    unsigned int n = strlen(buffer) + strlen(CRLF) - 1;
@@ -402,7 +411,7 @@ static int read_client(SOCKET sock, char *buffer)
 
    return n;
 }
-// #endregion lecture
+// #endregion Lecture
 
 // #endregion Client/player Management
 
@@ -418,7 +427,7 @@ static void disconnect_client(Client * client){
       if(other_player->player_state == IN_GAME) 
       {
          write_client(other_player->client->sock, "Player disconnected, waiting 30 seconds...");
-         manage_timeout(client->player, DISCONNECTED_FGAME, "Player disconnected. Game is cancelled", disconnect_players_from_game); // client left as a zombie for 30s
+         manage_timeout(client->player, DISCONNECTED_FGAME, "Timeout: Player disconnected. Game is cancelled", disconnect_players_from_game); // client left as a zombie for 30s
       }
       else
       { // case where both players disconnected
@@ -493,7 +502,7 @@ static void end_connection(int sock)
 {
    closesocket(sock);
 }
-// #endregion
+// #endregion Connexion Management
 
 // #region ////////////////////////////////////// - Request Management - //////////////////////////////////////////////////
 
@@ -505,19 +514,13 @@ void read_request(Client *requester, const char *req)
 
    switch (request->signature)
    {
-   // #region LOGOUT //WIP: question of quick command after logout//
+   // #region LOGOUT //
    case LOGOUT: 
-      // if (requester_state != IDLE)
-      // {
-      //    send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
-      //    break; 
-      // }
-         
       disconnect_client(requester);
       break;
-   // #endregion
+   // #endregion LOGOUT
    
-   // #region PROFILE //WIP//
+   // #region PROFILE //
    case PROFILE: 
       if (requester_state != IDLE)
       {
@@ -526,9 +529,10 @@ void read_request(Client *requester, const char *req)
       }
       req_player->player_state = LISTENING;
       ProfileRequest *profile_req = (ProfileRequest *)request;
-      req_player->player_state = requester_state; // stops listening
+      write_profile(requester);
+      req_player->player_state = IDLE; // stops listening
       break;
-   // #endregion
+   // #endregion PROFILE
 
    // #region MESSAGE
    case MESSAGE:
@@ -551,7 +555,7 @@ void read_request(Client *requester, const char *req)
       else
          send_message_to_all_clients(requester, message_req->message, false);
       break;
-   // #endregion
+   // #endregion MESSAGE
 
    // #region CHALLENGE
    case CHALLENGE:
@@ -587,7 +591,7 @@ void read_request(Client *requester, const char *req)
       create_game(requester, challenged_client, challenge_req->private);
       manage_timeout(req_player, AWAITING_CHALLENGE, "Challenge timeout. Game cancelled", disconnect_players_from_game);
       break;
-   // #endregion 
+   // #endregion CHALLENGE
 
    // #region MOVE
    case MOVE:
@@ -619,7 +623,7 @@ void read_request(Client *requester, const char *req)
          send_error_message(requester, "Error: Please wait for your turn to play", requester_state);
 
       break;
-   // #endregion
+   // #endregion MOVE
 
    // #region FRIEND //
    case FRIEND: 
@@ -668,9 +672,9 @@ void read_request(Client *requester, const char *req)
       write_client(requester->sock, "Sent friend request."); 
       manage_timeout(req_player, AWAITING_FRIEND, "Timeout: Friend request.", decline_friend_timeout);
       break;
-   // #endregion
+   // #endregion FRIEND
 
-   // #region RESPOND //WIP: way to remember friend request like game and add_friend()//
+   // #region RESPOND //
    case RESPOND: 
       Response *response = (Response *)request;
       switch (requester->player->player_state)
@@ -723,9 +727,9 @@ void read_request(Client *requester, const char *req)
          send_error_message(requester, "Error: Nothing to respond to.", requester_state);
       }
       break;
-   // #endregion
+   // #endregion RESPOND
 
-   // #region ACTIVE_PLAYERS //WIP : test_privacy takes in account 1 player but not friend w both//
+   // #region ACTIVE_PLAYERS //
    case ACTIVE_PLAYERS:
       if (requester_state != IDLE)
       {
@@ -761,7 +765,7 @@ void read_request(Client *requester, const char *req)
       }
       req_player->player_state = requester_state; // stops listening    
       break;
-   // #endregion
+   // #endregion ACTIVE_PLAYERS
 
    // #region ACTIVE_GAMES //
    case ACTIVE_GAMES: 
@@ -811,7 +815,7 @@ void read_request(Client *requester, const char *req)
       }
       req_player->player_state = requester_state; // stops listening
       break; 
-   // #endregion
+   // #endregion ACTIVE_GAMES
 
    // #region OBSERVE //
    case OBSERVE:
@@ -831,13 +835,13 @@ void read_request(Client *requester, const char *req)
 
       Game *game_to_observe = clients[index_client_to_observe]->player->current_game;
       Bool test_game_exists = clients[index_client_to_observe]->player->player_state == IN_GAME;
-      if(! test_game_exists)
+      if(!test_game_exists)
       {
          send_error_message(requester, "Error: No game to observe", IDLE);
          break;
       } 
       
-      Bool test_privacy = !game_to_observe->private || (are_friend(game->players_involved[0], requester->player) && are_friend(game->players_involved[1], requester->player));
+      Bool test_privacy = ((!game_to_observe->private) || (are_friend(game_to_observe->players_involved[0], requester->player)));
       if (test_privacy)
       {
          if (add_observer(clients[index_client_to_observe]->player->current_game, requester)) {
@@ -862,7 +866,7 @@ void read_request(Client *requester, const char *req)
          send_error_message(requester, "Error: No game to observe", IDLE);
       }
       break;
-   // #endregion
+   // #endregion OBSERVE
 
    // #region QUIT
    case QUIT: 
@@ -876,7 +880,22 @@ void read_request(Client *requester, const char *req)
       write_client(requester->sock, "Success: Quitted game");
       
       break;
-   // #endregion
+   // #endregion QUIT
+
+   // #region SET_BIO
+   case SET_BIO: 
+      if (requester_state != IDLE)
+      {
+         send_error_message(requester, "Error: 'There’s a time and place for everything, but not now.' - Profesor Oak", UNDEFINED);
+         break; 
+      }
+      SetBioRequest *set_bio_request = (SetBioRequest *)request;
+      req_player->player_state = LISTENING;
+      set_bio_player(requester->player, set_bio_request->bio);
+      write_client(requester->sock, "Bio changed.");
+      req_player->player_state = IDLE;
+      break;
+   // #endregion SET_BIO
 
    default:
       // GESTION
@@ -884,10 +903,10 @@ void read_request(Client *requester, const char *req)
       req_player->player_state = requester_state; // stops listening
       break;
    }
-   if(request->signature != LOGOUT)
+   if(request->signature != LOGOUT && request->signature != MESSAGE)
       write_client(requester->sock, CRLF);
 }
-// #endregion
+// #endregion Request Management
 
 // #region ////////////////////////////////////// - Server Management - ///////////////////////////////////////////////////
 
@@ -967,7 +986,7 @@ static void app(void)
          char* spacePtr = strchr(buffer, ' ');
          *spacePtr = '\0';
 
-         strncpy(p->name, buffer, MAX_NAME_SIZE - 1); ////////////////////////////////////////////////////////////////////// TO DO: BIO + password !!!!
+         strncpy(p->name, buffer, MAX_NAME_SIZE - 1);
          strncpy(p->password, spacePtr + 1, MAX_PASSWORD_SIZE - 1);
 
          int index_player = index_name_player(p->name);
@@ -993,7 +1012,7 @@ static void app(void)
             else { // player exists
                free(p);
                p = players[index_player];
-               p->player_state = IDLE;
+               if(p->player_state != DISCONNECTED_FGAME) p->player_state = IDLE;
             }
          }
 
@@ -1066,7 +1085,7 @@ static void app(void)
    clear_players(); // no database yet
    end_connection(sock);
 }
-// #endregion
+// #endregion Server Management
 
 int main(int argc, char **argv)
 {
