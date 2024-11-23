@@ -776,7 +776,7 @@ void read_request(Client *requester, const char *req)
       }
       req_player->player_state = LISTENING;
       SeeActiveGamesRequest *actives_games_req = (SeeActiveGamesRequest *)request;
-      char ActiveGameMessage[2 * MAX_NAME_SIZE + sizeof(" versus ") + 1];
+      char ActiveGameMessage[2 * MAX_NAME_SIZE + sizeof(" vs ") + 1];
       write_client(requester->sock, "<-- Active Games -->");
 
       // Only show game requesters to impede duplicate prints
@@ -790,7 +790,7 @@ void read_request(Client *requester, const char *req)
             if(game->players_involved[0] != req_player->friends[i]) continue; // not requester
 
             strcpy(ActiveGameMessage, game->players_involved[0]->name);
-            strcat(ActiveGameMessage, " versus ");
+            strcat(ActiveGameMessage, " vs ");
             strcat(ActiveGameMessage, game->players_involved[1]->name);
             write_client(requester->sock, ActiveGameMessage);
             
@@ -808,7 +808,7 @@ void read_request(Client *requester, const char *req)
 
             
             strcpy(ActiveGameMessage, game->players_involved[0]->name);
-            strcat(ActiveGameMessage, " versus ");
+            strcat(ActiveGameMessage, " vs ");
             strcat(ActiveGameMessage, game->players_involved[1]->name);
             write_client(requester->sock, ActiveGameMessage);
          }

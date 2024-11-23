@@ -30,6 +30,8 @@ typedef struct in_addr IN_ADDR;
 
 #endif
 
+// #region Server parameters //
+
 #define CRLF "\r\n"
 #define PORT 1977
 #define MAX_CLIENTS 100
@@ -44,4 +46,5 @@ typedef struct in_addr IN_ADDR;
 #define MAX_NAME_SIZE 50
 #define MAX_PASSWORD_SIZE 50
 #define MAX_BIO_SIZE 50
-#define MAX_FRIEND_REQUEST_SIZE MAX_PLAYER_COUNT
+
+// #endregion Server parameters

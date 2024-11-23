@@ -3,7 +3,7 @@ CFLAGS =
 CC = gcc
 
 # Source files
-SRCS_S = $(wildcard Serveur/*.c) 
+SRCS_S = $(wildcard Server/*.c) 
 SRCS_A = $(wildcard Libraries/Awale/*.c)
 SRCS_C = $(wildcard Client/*.c)
 
