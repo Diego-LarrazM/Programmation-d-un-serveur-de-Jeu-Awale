@@ -41,28 +41,20 @@
   <summary>Table of Contents</summary>
   <ol>
     <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
+      <a href="#Propos">[❓]  À Propos du Projet</a>
     </li>
     <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
+      <a href="#dep">[ 📖 ]   Dépendances (librairies)</a>
     </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#Lancement">[ ⋆⭒˚.⋆🚀 ] Lancement</a></li>
+    <li><a href="#ComClient">[ 📝-💻 ] Commandes client de base</a></li>
+    <li><a href="#ComJeu">[ 📝-🎮 ] Commandes client pour Jouer</a></li>
     <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
-
+<span id = "Propos"></span>
 
 <!-- À PROPOS DU PROJET -->
 ## 1 - [❓]  À Propos du Projet
@@ -73,16 +65,22 @@ Ce projet fournit une application client/serveur qui permettent aux clients de j
 Les joueurs peuvent de même se démander en amitié et privatiser leur parties, voir les joueurs ou parties actives et de les observer. <br/>
 Ils se connectent avec un mot de passe et un pseudo qui permet de les identifier.
 
-### 🖥 Coté Serveur >
+<span id = "Propos/cs"></span>
+
+### 🖥 Côté Serveur >
 Le script `/Server/server.c` permet de lancer un serveur connecté au `PORT` défini sur `Libraires/network.h` (égal à 1977 par défaut) et à l'adresse IP `IP_Serv` de l'ordinateur qui a lancé le script. <br/>
 L'ordinateur qui lancera le script se comportera comme le serveur en attendant des requêtes de la part des utilisateurs avec un socket ouvert. <br/> Une fois un client connecté il créera une nouvelle socket pour ce client sur laquelle ils pourront communiquer.<br/> Par la suite, il répondra à leurs démandes en fonction du bésoin défini sur chaque requête.
 
-### 💻 Coté Client >
+<span id = "Propos/cc"></span>
+
+### 💻 Côté Client >
 Le script `/Client/client.c` permet à l'ordinateur qui lance ce script de se connecter au socket sur `IP_Serv` et `PORT` du serveur et d'y communiquer en lançant des requêtes grâce à des commandes sur le terminal<br/>
 Les réponses du serveur seront affichées tout de même sur ce terminal.
 
 
 <br/><br/><br/>
+
+<span id = "dep"></span>
 
 ## 2 - [ 📖 ]   Dépendances (librairies)
 
@@ -131,6 +129,8 @@ grâçe à l'extension :<br/>
 <br/><br/>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<span id = "Lancement"></span>
 
 <!-- LANCEMENT -->
 ## 3 - [ ⋆⭒˚.⋆🚀 ] Lancement
@@ -211,6 +211,7 @@ C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> __|
 
 
 
+<span id = "ComClient"></span>
 
 <!-- COMMANDES CLIENT -->
 ## 4 - [ 📝-💻 ] Commandes client de base
@@ -419,6 +420,8 @@ __|
 ```
 
 <br/><br/><br/>
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <span id = "ComJeu"></span>
 
@@ -632,6 +635,7 @@ Use this space to list resources you find helpful and would like to give credit 
 * [Region nextension from maptz](https://marketplace.visualstudio.com/items?itemName=maptz.regionfolder)
 * [Emojis](https://emojidb.org/reccomend-emojis)
 * [Wikipédia game page](https://fr.wikipedia.org/wiki/Awal%C3%A9)
+* [INSA IF](https://if.insa-lyon.fr/fr/rubrique/departement-informatique)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
