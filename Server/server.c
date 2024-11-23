@@ -585,7 +585,7 @@ void read_request(Client *requester, const char *req)
       // We prepare the game and inform the challenged player
       challenged_client->player->player_state = RESPONDING_CHALLENGE;
       char buffer[BUF_SIZE];
-      sprintf(buffer, "You have been challenged by %s.%s Type /accept to accept or /decline to refuse%s", req_player->name, CRLF, CRLF);
+      sprintf(buffer, "You have been challenged by %s.%sType /accept to accept or /decline to refuse...%s", req_player->name, CRLF, CRLF);
       write_client(challenged_client->sock, buffer);
 
       create_game(requester, challenged_client, challenge_req->private);
@@ -666,7 +666,7 @@ void read_request(Client *requester, const char *req)
       // Inform both parties
       char friend_request_msg[MAX_NAME_SIZE + 100];
       strcpy(friend_request_msg, req_player->name);
-      strcat(friend_request_msg, " wants to be friends... accept or decline ?");
+      strcat(friend_request_msg, " wants to be friends... /accept or /decline ?");
       
       write_client(to_friend->client->sock, friend_request_msg);  
       write_client(requester->sock, "Sent friend request."); 

@@ -36,7 +36,31 @@
 </center>
 
 
-
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
 
 
 
@@ -86,6 +110,24 @@ Libraries/network.h     // paramètres (constantes) et librairies nécessaires a
 <netdb.h>
 <sys/select.h>
 ```
+
+
+### ✨ Reccomandation >
+Si ce projet est ouver avec Visual Studio Code, le projet est défini avec des regions permettant de plier des parties du code qui ne nous intéressent pas pour faciliter la lecture
+grâçe à l'extension :<br/>
+
+|  |  |
+| ---------- | ---------- |
+| [<img style="width: 40px; height: 40px;" src = "https://maptz.gallerycdn.vsassets.io/extensions/maptz/regionfolder/1.0.22/1679515884771/Microsoft.VisualStudio.Services.Icons.Default"/>](https://marketplace.visualstudio.com/items?itemName=maptz.regionfolder) | <a href="https://marketplace.visualstudio.com/items?itemName=maptz.regionfolder"> "#region folding for VS Code" - par maptz »</a>.
+
+```c
+// #region X
+
+...
+
+// #endregion
+```
+
 <br/><br/>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -152,7 +194,7 @@ Il faut de même fournir le **pseudo** et **mot de passe** du client qui se conn
 #### -> Connexion réussie:
 ```bash
 C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> ./Client/client 192.168.10.178 pseudoJoueur motDePasse
-Connecté au serveur !
+Connected to the server
 
 __|
 ```
@@ -171,7 +213,7 @@ C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> __|
 
 
 <!-- COMMANDES CLIENT -->
-## 4 - [ 📝 ] Commandes client de base
+## 4 - [ 📝-💻 ] Commandes client de base
 
 Ici sont listées l'ensemble des fonctionalités réalisables par le client (sauf celles propres au jeu cf <a href ="#ComJeu">Commandes client pour Jouer</a>), des exemples d'utilisation et les commandes à taper.<br/>
 ⚠️ `[ENTER]` répresente la touche entrée frappée et `__|` le curseur.<br/>
@@ -245,7 +287,7 @@ __|
 ```
 C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> ./Client/client 192.168.10.178 Jojo MotdePasse2
 
-Toto (Whispers): Hey, ceci est un message secret.
+Toto (whispers) : Hey, ceci est un message secret.
 __|
 ```
 
@@ -326,7 +368,7 @@ __|
 ⚠️ <span style ="color:orange;">Ne fait rien si nous sommes dans une partie ou en attendant/répondant à une démande d'amitié ou de challenge</span><br/>
 
 Lance une démande en amitié envers le joueur indiqué.<br/>
-⚠️ Le joueur à démander doit être conecté.<br/>
+⚠️ Le joueur à démander doit être conecté et non occupé.<br/>
 ⚠️ Il ne'est pas possible de s'ajouter soi-même en ami.<br/>
 ⚠️ Le démandeur et répondeur ne pourront rien faire en attendant la réponse<br/>
 ⚠️ Si le joueur ne réponds pas dans `STD_TIMEOUT_DURATION` (cf. <a href ="#configServ">configuration</a>), il y aura un timeout et la requête sera annulée.<br/>
@@ -337,15 +379,14 @@ Lance une démande en amitié envers le joueur indiqué.<br/>
 *Pour Toto*
 ```
 /friend Narnia64 [ENTER]
-friend request sent...
+Sent friend request.
 
 __|
 ```
 
 *Pour Narnia64*
 ```
-You have received a friend request from Toto... /accept or /decline
-
+Toto wants to be friends... /accept or /decline ?
 __|
 ```
 
@@ -365,49 +406,204 @@ Il n'est pas possible de faire autre chose que de répondre avec une de ces comm
 ```
 You have received a friend request from Toto... /accept or /decline
 /accept [ENTER]
-You are now friends !
+Success: Friend added !
 
 __|
 ```
 
 *Pour Toto*
 ```
-You are now friends !
+Success: Friend added !
 
 __|
 ```
 
-<br/><br/>
+<br/><br/><br/>
 
 <span id = "ComJeu"></span>
 
-## 5 - [ 📝 ] Commandes client pour Jouer
+## 5 - [ 📝-🎮 ] Commandes client pour Jouer 
 
 ### < ---------------- `/challenge <pseudo-joueur> [private]` ----------------- >
 
-⚠️ <span style ="color:orange;">Ne fait rien si auccune démande n'a été reálisée à ce joueur</span><br/>
+⚠️ <span style ="color:orange;">Ne fait rien si nous sommes dans une partie ou en attendant/répondant à une démande d'amitié ou de challenge</span><br/>
 
-asdasdasd
+Lance une démande envers le jouer indiqué pour lancer une partie d'AWALE ensemble.<br/>
+⚠️ Le joueur à démander doit être conecté et non occupé.<br/>
+⚠️ Il ne'est pas possible de se challenge soi-même.<br/>
+⚠️ Le démandeur et répondeur ne pourront rien faire en attendant la réponse<br/>
+⚠️ Si le joueur ne réponds pas dans `STD_TIMEOUT_DURATION` (cf. <a href ="#configServ">configuration</a>), il y aura un timeout et la requête sera annulée.<br/>
+⚠️ Si le joueur se déconnecte après avoir reçu une déamdne d'amitié, une fois reconnecté sa démande sera perdue et le démandeur pourra continuer à faire des commandes sans dévoir attendre le timeout.<br/>
+
+* Affichage du Jeu : <br/>
+Sur le jeu seront affichés tout en haut le score de chaque jouer à chaque tour (e nnombre de graines récoltées).<br/>
+Puis le palteau avec sur chaque case: le nom de la case et le nombre de graines sur cete case. <br/>
+**Le sens du jeu est HORAIRE par défaut** (démontré par les flèches aux bords du plateau)<br/>
+Chaque joueur est informé lorsqu'il est leur tour de jouer. Le joueur qui joue au premier tour est choisi aléatoirement.<br/>
+Le jeu indique au joueur courant les cases qu'il peut choisir à jouer.
+```
+╔════Numero Case════╗        ╔═══════════════════╗
+║ Nombre de graines ║   ou   ║ Nombre de graines ║
+╚═══════════════════╝        ╚════Numero Case════╝ 
+```
 
 * Exemple : <br/>
 
+#### \\_> Toto challenge Jojo (qui est `Ready`) à une partie, il accepte et la partie se lance.
 *Pour Toto*
 ```
 
 /challenge Jojo [ENTER]
 
 
+Score : Toto : 0 - Jojo : 0
+  ╔01╦02╦03╦04╦05╦06╗
+> ║04║04║04║04║04║04║ ┐
+│ ╠══╬══╬══╬══╬══╬══╣ │
+└ ║04║04║04║04║04║04║ <
+  ╚12╩11╩10╩09╩08╩07╝
+
+Au tour de Jojo
 __|
 ```
+
+*Pour Jojo*
+```
+You have been challenged by Toto.
+Type /accept to accept or /decline to refuse...
+
+/accept
+Score : Toto : 0 - Jojo : 0
+  ╔12╦11╦10╦09╦08╦07╗
+> ║04║04║04║04║04║04║ ┐
+│ ╠══╬══╬══╬══╬══╬══╣ │
+└ ║04║04║04║04║04║04║ <
+  ╚01╩02╩03╩04╩05╩06╝
+
+Au tour de Jojo
+Choissisez une case parmis: 7 8 9 10 11 12
+__|
+```
+
+* Privacité : <br/>
+La partie peut être rendue invisible pour tout observeur non ami de celui qui la lance (ici Toto) en la rendant privée.
 
 *Pour Toto*
 ```
-You are now friends !
+/challenge Jojo private  [ENTER]
+```
+
+<br/><br/>
+
+### < ---------------- `/move <case jouée>` ----------------- >
+
+⚠️ <span style ="color:orange;">Ne fait rien si nous ne sommes pas dans une partie ou il n'est pas notre tour de jouer</span><br/>
+
+Permet au joueur courant de réaliser sont tour de jeu dans une partie et sémer les graines de la case choisie.<br/>
+⚠️ La case jouée doit être parmis celles indiquées permises<br/>
+
+
+* Exemple : <br/>
+
+#### \\_> Toto joue la case 10, sème les graines et conquiert les cases 3 et 4 (+4 graines). Puis c'est le tour de Jojo.
+*Pour Toto*
+```
+
+Score : Toto : 7 - Jojo : 5
+  ╔01╦02╦03╦04╦05╦06╗
+> ║04║03║01║01║00║01║ ┐
+│ ╠══╬══╬══╬══╬══╬══╣ │
+└ ║04║00║06║02║00║10║ <
+  ╚12╩11╩10╩09╩08╩07╝
+
+Au tour de Toto
+Choissisez une case parmis: 7 9 10 12
+
+/move 10 [ENTER]
+Coup joué : 10
+
+Score : Toto : 11 - Jojo : 5
+  ╔01╦02╦03╦04╦05╦06╗
+> ║05║04║00║00║00║01║ ┐
+│ ╠══╬══╬══╬══╬══╬══╣ │
+└ ║05║01║00║02║00║10║ <
+  ╚12╩11╩10╩09╩08╩07╝
+
+Au tour de Jojo
 
 __|
 ```
 
+*Pour Jojo*
+```
 
+Score : Toto : 7 - Jojo : 5
+  ╔07╦08╦09╦10╦11╦12╗
+> ║10║00║02║06║00║04║ ┐
+│ ╠══╬══╬══╬══╬══╬══╣ │
+└ ║01║00║01║01║03║04║ <
+  ╚06╩05╩04╩03╩02╩01╝
+
+Au tour de Toto
+
+Coup joué : 10
+Score : Toto : 11 - Jojo : 5
+  ╔07╦08╦09╦10╦11╦12╗
+> ║10║00║02║00║01║05║ ┐
+│ ╠══╬══╬══╬══╬══╬══╣ │
+└ ║01║00║00║00║04║05║ <
+  ╚06╩05╩04╩03╩02╩01╝
+
+Au tour de Jojo
+Choissisez une case parmis: 1 2 6
+__|
+```
+
+<br/><br/>
+
+### < ---------------- `/observe <pseudo-joueur>` ----------------- >
+
+⚠️ <span style ="color:orange;">Ne fait rien si nous sommes dans une partie ou en attendant/répondant à une démande d'amitié ou de challenge</span><br/>
+
+Permet au joueur d'observer la partie du joueur indiqué.<br/>
+Démander à observer le premier ou deuxième joueur d'une partie donnera le même résultat.
+L'observateur verra le point de vue du joueur courant à chaque tour.
+⚠️ La partie jouée par le joueur qu'il observer ne peut être observée que si elle est publique ou si le joueur qui l'a lancé est ami de l'observateur.<br/>
+
+
+* Exemple : <br/>
+
+#### \\_> Narnia64 observe la partie de son ami Toto. Jojo n'est pas son ami mais ici c'est Toto qui l'a lancé et la partie est publique.
+*Pour Narnia64*
+```
+/games
+<-- Active Player Name : State -->
+Toto vs Jojo
+
+/observe Toto [ENTER]
+
+
+Score : Toto : 7 - Jojo : 5
+  ╔01╦02╦03╦04╦05╦06╗
+> ║04║03║01║01║00║01║ ┐
+│ ╠══╬══╬══╬══╬══╬══╣ │
+└ ║04║00║06║02║00║10║ <
+  ╚12╩11╩10╩09╩08╩07╝
+
+Au tour de Toto
+
+Coup joué : 10
+Score : Toto : 11 - Jojo : 5
+  ╔07╦08╦09╦10╦11╦12╗
+> ║10║00║02║00║01║05║ ┐
+│ ╠══╬══╬══╬══╬══╬══╣ │
+└ ║01║00║00║00║04║05║ <
+  ╚06╩05╩04╩03╩02╩01╝
+
+Au tour de Jojo
+
+__|
+```
 
 <br/><br/><br/>
 
@@ -431,80 +627,11 @@ Non-definie pour l'instant.
 Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
 
 * [Choose an Open Source License](https://choosealicense.com)
-* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
-* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
-* [Malven's Grid Cheatsheet](https://grid.malven.co/)
-* [Img Shields](https://shields.io)
-* [GitHub Pages](https://pages.github.com)
-* [Font Awesome](https://fontawesome.com)
-* [React Icons](https://react-icons.github.io/react-icons/search)
-
-
+* [Best-README-Template](https://github.com/othneildrew/Best-README-Template/blob/main/BLANK_README.md)
+* ["How to Display Contributor Profile Pictures in Your GitHub README" - Basavaraja V](https://medium.com/@basavarajavyadav/how-to-display-contributor-profile-pictures-in-your-github-readme-29789172154f)
+* [Region nextension from maptz](https://marketplace.visualstudio.com/items?itemName=maptz.regionfolder)
+* [Emojis](https://emojidb.org/reccomend-emojis)
+* [Wikipédia game page](https://fr.wikipedia.org/wiki/Awal%C3%A9)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=for-the-badge
-[contributors-url]: https://github.com/othneildrew/Best-README-Template/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=for-the-badge
-[forks-url]: https://github.com/othneildrew/Best-README-Template/network/members
-[stars-shield]: https://img.shields.io/github/stars/othneildrew/Best-README-Template.svg?style=for-the-badge
-[stars-url]: https://github.com/othneildrew/Best-README-Template/stargazers
-[issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=for-the-badge
-[issues-url]: https://github.com/othneildrew/Best-README-Template/issues
-[license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
-[license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/othneildrew
-[product-screenshot]: images/screenshot.png
-[Next.js]: https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white
-[Next-url]: https://nextjs.org/
-[React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
-[React-url]: https://reactjs.org/
-[Vue.js]: https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D
-[Vue-url]: https://vuejs.org/
-[Angular.io]: https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white
-[Angular-url]: https://angular.io/
-[Svelte.dev]: https://img.shields.io/badge/Svelte-4A4A55?style=for-the-badge&logo=svelte&logoColor=FF3E00
-[Svelte-url]: https://svelte.dev/
-[Laravel.com]: https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white
-[Laravel-url]: https://laravel.com
-[Bootstrap.com]: https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white
-[Bootstrap-url]: https://getbootstrap.com
-[JQuery.com]: https://img.shields.io/badge/jQuery-0769AD?style=for-the-badge&logo=jquery&logoColor=white
-[JQuery-url]: https://jquery.com 
-
-https://github.com/othneildrew/Best-README-Template
-https://fr.wikipedia.org/wiki/Awal%C3%A9
-
-
-
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
