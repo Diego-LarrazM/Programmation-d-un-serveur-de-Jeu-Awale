@@ -46,6 +46,9 @@ typedef struct struct_player
    struct struct_client* client;
    struct struct_game* current_game;
 
+   unsigned int nb_games;
+   unsigned int nb_wins;
+
 }PlayerInfo;
 
 typedef struct struct_client

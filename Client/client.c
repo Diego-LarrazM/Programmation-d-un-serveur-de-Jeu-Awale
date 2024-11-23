@@ -53,8 +53,10 @@ ClientRequest* create_request(const char* buffer){
       
       if (strcmp(command, "help") == 0 || strcmp(command, "?") == 0) {
          printf("/logout                              : to quit the server\n");
+         printf("/profile [<player-name>]             : to see your or another player's profile\n");
+         printf("/setbio <new-bio>                    : to set a new bio to your profile\n");
          printf("/msg <player-name> <message-content> : to send a private message\n");
-         printf("/challenge <player-name>             : to challenge a friend\n");
+         printf("/challenge <player-name> [private]   : to challenge a friend\n");
          printf("/move <house-number>                 : to choose a move to play\n");
          printf("/friend <player-name>                : to add a friend\n");
          printf("/accept                              : to accept a request\n");
@@ -67,6 +69,31 @@ ClientRequest* create_request(const char* buffer){
       else if (strcmp(command, "logout") == 0) {
          request->signature = LOGOUT;
          request->size = 2 + 2;
+      }
+      else if (strcmp(command, "profile") == 0) {
+         if (spacePtr != NULL) {
+            char *sSpacePtr = strchr(spacePtr + 1, ' ');
+            if (sSpacePtr != NULL) {
+               printf("To use the /profile command, if you want to show your player simply write /profile, but if you want to show another player's profile, you need to indicate the player name after /profile.\n/profile [<player-name>]\n");
+               return request;
+            }
+         }
+         request->signature = PROFILE;
+         ProfileRequest *profile_request = (ProfileRequest *)request;
+         profile_request->size = 2 + 2 + MAX_NAME_SIZE;
+         if (rest[0] == '\0')
+            profile_request->is_me = true;
+         else{
+            profile_request->is_me = false;
+            strcpy(profile_request->player_name, rest);
+         }
+         profile_request->size = 2 + 2 + 1 + MAX_NAME_SIZE;
+      }
+      else if (strcmp(command, "setbio") == 0) {
+         request->signature = SET_BIO;
+         SetBioRequest *setbio_request = (SetBioRequest *)request;
+         strcpy(setbio_request->bio, rest);
+         request->size = 2 + 2 + strlen(setbio_request->bio);
       }
       else if (strcmp(command, "msg") == 0) {
          if (rest[0] == '\0'){
@@ -353,7 +380,7 @@ static void write_server_request(SOCKET sock, const ClientRequest *request)
 
 int main(int argc, char **argv)
 {
-   if(argc < 3)
+   if(argc < 4)
    {
       printf("Usage : %s [address] [pseudo] [password]\n", argv[0]);
       return EXIT_FAILURE;

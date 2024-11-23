@@ -132,6 +132,9 @@ void continue_game(Game *game)
       sprintf(message, "Le joueur %s a gagné la partie!", current_player->name);
       write_client(p1_sock, message);
       write_client(p2_sock, message);
+      ++(current_player->nb_wins);
+      ++(game->players_involved[0]->nb_games);
+      ++(game->players_involved[1]->nb_games);
       for (int o = 0; o < game->nb_observers; o++) // observers
          write_client(game->observers[o]->sock, message);
       end_game(game);
@@ -247,10 +250,10 @@ void set_bio_player(PlayerInfo* player, char* bio)
    strcpy(player->bio, bio);
 }
 
-void write_profile(Client* client)
+void write_profile(Client* client, PlayerInfo* player)
 {
    char buffer[BUF_SIZE];
-   sprintf(buffer, "<-- Profile -->%s<- Nom:  %s ->%s<- Bio ->%s%s", CRLF, client->player->name, CRLF, CRLF, client->player->bio);
+   sprintf(buffer, "<-- Profile -->%s<- Name:  %s ->%s<- Played games: %d, Games Won: %d ->%s<- Bio ->%s%s", CRLF, player->name, CRLF, player->nb_games, player->nb_wins, CRLF, CRLF, player->bio);
    write_client(client->sock, buffer);
 }
 
@@ -529,7 +532,20 @@ void read_request(Client *requester, const char *req)
       }
       req_player->player_state = LISTENING;
       ProfileRequest *profile_req = (ProfileRequest *)request;
-      write_profile(requester);
+
+      if (profile_req->is_me)
+         write_profile(requester, requester->player);
+      else{
+         int profile_index = index_name_player(profile_req->player_name); // index of the player
+         
+         if (profile_index == actual_players)
+         {
+            send_error_message(requester, "Error: Player doesn't exist.", IDLE);
+            break;
+         }
+         PlayerInfo * profile_player = players[profile_index];
+         write_profile(requester, profile_player);
+      }
       req_player->player_state = IDLE; // stops listening
       break;
    // #endregion PROFILE
@@ -981,6 +997,8 @@ static void app(void)
          PlayerInfo* p = (PlayerInfo*) malloc(sizeof(PlayerInfo));
          p->friend_count = 0;
          p->current_game = NULL;
+         p->nb_games = 0;
+         p->nb_wins = 0;
          set_initial_player(p);
          
          char* spacePtr = strchr(buffer, ' ');
@@ -1052,7 +1070,7 @@ static void app(void)
                write_client(other_client_sock, "Player reconnected !");
             }
             else
-               write_client(c->sock, "Connected to the server");
+               write_client(c->sock, "Connected to the server.\r\nType /help or /? to get the list of command");
          }
          
       }

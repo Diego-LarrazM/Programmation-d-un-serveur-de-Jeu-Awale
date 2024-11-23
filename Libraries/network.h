@@ -45,6 +45,6 @@ typedef struct in_addr IN_ADDR;
 #define MAX_FRIEND_COUNT MAX_PLAYER_COUNT
 #define MAX_NAME_SIZE 50
 #define MAX_PASSWORD_SIZE 50
-#define MAX_BIO_SIZE 50
+#define MAX_BIO_SIZE 100
 
 // #endregion Server parameters

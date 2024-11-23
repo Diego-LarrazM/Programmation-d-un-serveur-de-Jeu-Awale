@@ -156,7 +156,7 @@ Dans `Libraries/network.h` vous trouverez des constantes permettant de configure
 #define MAX_FRIEND_COUNT MAX_PLAYER_COUNT                     // Nombre maximal de joueurs qu'un joueur peut ajouter en ami
 #define MAX_NAME_SIZE 50                                      // Taille maximale du pseudo
 #define MAX_PASSWORD_SIZE 50                                  // Taille maximale du mot de passe
-#define MAX_BIO_SIZE 50                                       // Taille maximale de la BIO
+#define MAX_BIO_SIZE 100                                      // Taille maximale de la BIO
 
 // #endregion Server parameters
 ```

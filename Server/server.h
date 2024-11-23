@@ -58,6 +58,6 @@ void* decline_friend_timeout(void* arg);
 void* disconnect_players_from_game(void* arg);
 
 void set_bio_player(PlayerInfo* player, char* bio);
-void write_profile(Client* client);
+void write_profile(Client* client, PlayerInfo* player);
 
 #endif /* guard */
