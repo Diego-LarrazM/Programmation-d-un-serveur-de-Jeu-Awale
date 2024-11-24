@@ -280,51 +280,55 @@ Affiche son profil ou le profil d'un autre joueur
 
 *Pour Toto*
 ```
-C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> /profile
+/profile
 <-- Profile -->
 <- Name:  Toto ->
 <- Played games: 10, Games Won: 6 ->
 <- Bio ->
 Best bio in the world!
+
 __|
 ```
 
 *Pour Jojo*
 ```
-C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> /profile Toto
+/profile Toto
 <-- Profile -->
 <- Name:  Toto ->
 <- Played games: 10, Games Won: 6 ->
 <- Bio ->
 Best bio in the world!
+
 __|
 ```
 
 <br/><br/>
 
 ### < ---------------- `/setbio <new-bio>` ----------------- >
-Change 
+Change la bio
 * Exemple : <br/>
 
 *Pour Toto*
 ```
-C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> /profile
+
+/profile
 <-- Profile -->
 <- Name:  Toto ->
 <- Played games: 10, Games Won: 6 ->
 <- Bio ->
 
 
-C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> /setbio Best bio in the world!
+/setbio Best bio in the world!
 Bio changed.
 
 
-C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> /profile Toto
+/profile
 <-- Profile -->
 <- Name:  Toto ->
 <- Played games: 10, Games Won: 6 ->
 <- Bio ->
 Best bio in the world!
+
 __|
 ```
 
