@@ -25,7 +25,7 @@ all: $(TARGETS_C) $(TARGETS_S)
 $(TARGETS_C): $(OBJS_C)
 	$(CC) $< $(LIBS) $(CFLAGS) -o $@
 
-# Build each target in Serveur with dependency on Libraries/Awale objects
+# Build each target in Server with dependency on Libraries/Awale objects
 $(TARGETS_S): $(OBJS_S) $(OBJS_A)
 	$(CC) $(OBJS_A) $< $(LIBS) $(CFLAGS) -o $@
 
@@ -35,4 +35,4 @@ $(TARGETS_S): $(OBJS_S) $(OBJS_A)
 
 # Clean up
 clean:
-	rm -f Serveur/*.o Libraries/Awale/*.o Client/*.o $(TARGETS_S) $(TARGETS_C)
+	rm -f Server/*.o Libraries/Awale/*.o Client/*.o $(TARGETS_S) $(TARGETS_C)
