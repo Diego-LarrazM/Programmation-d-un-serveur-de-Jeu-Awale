@@ -46,12 +46,11 @@ void create_game(Client *client1, Client *client2, Bool private)
    game->nb_observers = 0;
 }
 
-Bool accept_challenge(Client *challenged)
+void accept_challenge(Client *challenged)
 {
    Game *game = challenged->player->current_game;
    game->players_involved[0]->player_state = IN_GAME;
    game->players_involved[1]->player_state = IN_GAME;
-   return true;
 }
 
 void end_game(Game *game)
@@ -368,17 +367,18 @@ static void send_message_to_all_clients(Client *sender, const char *buffer, Bool
    int i = 0;
    char message[BUF_SIZE];
    message[0] = 0;
+   if (from_server == 0)
+   {
+      strncpy(message, sender->player->name, BUF_SIZE - 1);
+      strncat(message, " : ", sizeof message - strlen(message) - 1);
+   }
+   strncat(message, buffer, sizeof message - strlen(message) - 1);
+
    for (i = 0; i < actual_clients; i++)
    {
       /* we don't send message to the sender */
       if (sender->sock != clients[i]->sock)
       {
-         if (from_server == 0)
-         {
-            strncpy(message, sender->player->name, BUF_SIZE - 1);
-            strncat(message, " : ", sizeof message - strlen(message) - 1);
-         }
-         strncat(message, buffer, sizeof message - strlen(message) - 1);
          write_client(clients[i]->sock, message);
       }
    }
@@ -710,8 +710,9 @@ void read_request(Client *requester, const char *req)
             send_error_message(requester, "Player has disconnected.", IDLE);
             break;
          }
-         if (response->validation && accept_challenge(requester))
+         if (response->validation)
          {
+            accept_challenge(requester);
             continue_game(req_player->current_game);
          }
          else 

@@ -28,7 +28,7 @@ Plateau* initGame();
 Function that initiate an Awale game struct
 
 Return:
-Plateau* : the Awale game struct initiated
+Plateau*: the Awale game struct initiated
 */
 
 void endGame(Plateau* p);
