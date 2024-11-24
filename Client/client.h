@@ -53,7 +53,7 @@ char *buffer: the buffer where to write what the server is sending
 
 static void write_server(SOCKET sock, const char *buffer);
 /*
-Function that write to the server what's inside of the buffer put in argument
+Function that writes to the server what's inside of the buffer put in argument
 Used to send a string format message
 
 Parameters:
@@ -63,7 +63,7 @@ const char *buffer: contains what to write to the server
 
 static void write_server_request(SOCKET sock, const ClientRequest *request);
 /*
-Function that write to the server the request put in argument
+Function that writes to the server the request put in argument
 Used to send a request struct format message
 
 Parameters:
@@ -73,7 +73,7 @@ const ClientRequest *request: contains what to write to the server
 
 ClientRequest* create_request(const char* buffer);
 /*
-Function that create the request the user wants to send to the user with the user's command
+Function that creates the request the user wants to send to the user with the user's command
 
 Parameter:
 const char* buffer: the buffer containing the user command

@@ -25,7 +25,7 @@ typedef struct plateau{
 
 Plateau* initGame();
 /*
-Function that initiate an Awale game struct
+Function that initiates an Awale game struct
 
 Return:
 Plateau*: the Awale game struct initiated
@@ -33,7 +33,7 @@ Plateau*: the Awale game struct initiated
 
 void endGame(Plateau* p);
 /*
-Function that delete the Awale game struct put in argument
+Function that deletes the Awale game struct put in argument
 
 Parameter:
 Plateau* p: the Awale game struct to delete
@@ -41,7 +41,7 @@ Plateau* p: the Awale game struct to delete
 
 BitField_1o playableFamine(Plateau* p);
 /*
-Function that determine what are the houses of the current player that are playable while puting at least one seed in the opponent houses
+Function that determines what are the houses of the current player that are playable while puting at least one seed in the opponent houses
 
 Parameter:
 Plateau* p: the Awale game struct
@@ -52,7 +52,7 @@ BitField_1o: bit field of the possible houses
 
 BitField_1o playable(Plateau* p);
 /*
-Function that determine the houses that are not equal to 0
+Function that determines the houses that are not equal to 0
 
 Parameter:
 Plateau* p: the Awale game struct
@@ -76,7 +76,7 @@ Bool: if the move was possible
 
 Bool cantPlay(Plateau* p, NumCase num_case, BitField_1o casesJouables);
 /*
-Function that determine if the current player can play the house number indicated in argument
+Function that determines if the current player can play the house number indicated in argument
 
 Parameters:
 Plateau* p: the Awale game struct
@@ -110,7 +110,7 @@ NumBase: the house number of the last seed put
 
 BitField_1o trouverCasesConquises(Plateau* p, NumCase num_case);
 /*
-Function that determine what houses of the opponent's current player would be taken if the last seed was put in the house number put in argument
+Function that determines what houses of the opponent's current player would be taken if the last seed was put in the house number put in argument
 
 Parameters:
 Plateau* p: the Awale game struct
@@ -122,7 +122,7 @@ BitField_1o: bit field of all houses to capture seeds from
 
 void recolterConquetes(Plateau* p, BitField_1o casesConquises);
 /*
-Function that capture the seeds in the houses indicated by the bit field entered in argument
+Function that captures the seeds in the houses indicated by the bit field entered in argument
 
 Parameters:
 Plateau* p: the Awale game struct
@@ -134,7 +134,7 @@ BitField_1o: bit field of all houses to capture seeds from
 
 void changePlayer(Plateau* p);
 /*
-Function that change the current player
+Function that changes the current player
 
 Parameter:
 Plateau* p: the Awale game struct
@@ -142,12 +142,12 @@ Plateau* p: the Awale game struct
 
 void collectAllPoints(Plateau* p);
 /*
-Function that collect all seeds 
+Function that collects all seeds 
 */
 
 Bool isOpponentFamished(Plateau* p);
 /*
-Function that check if the current player's opponent can't play next turn if no seed are sent to his side
+Function that checks if the current player's opponent can't play next turn if no seed are sent to his side
 
 Parameter:
 Plateau* p: the Awale game struct
@@ -158,7 +158,7 @@ Bool: if the opponent can't play next turn if no seed are sent to his side
 
 Bool hasWon(Plateau* p);
 /*
-Function that check if the current player has won
+Function that checks if the current player has won
 
 Parameter:
 Plateau* p: the Awale game struct
@@ -169,7 +169,7 @@ Bool: if the current player has won
 
 Bool isDraw(Plateau* p);
 /*
-Function that check if the current player has won
+Function that checks if the current player has won
 
 Parameter:
 Plateau* p: the Awale game struct
@@ -180,7 +180,7 @@ Bool: if the current player has won
 
 void printBoard(Plateau* p, Joueur joueur, char* buffer);
 /*
-Function that put the current board state in the buffer put in argument
+Function that puts the current board state in the buffer put in argument
 
 Parameters:
 Plateau* p: the Awale game struct
