@@ -161,10 +161,19 @@ void continue_game(Game *game)
 
    // Print possible houses to pick for current player
    BitField_1o casesJouables = isOpponentFamished(game->game_board) ? playableFamine(game->game_board) : playable(game->game_board);
+   if (casesJouables) { // If there's a possible move
    char casesJouablesStr[20];
    bitfieldToString(game->game_board->joueurCourant, casesJouables, casesJouablesStr);
    sprintf(message, "Choissisez une case parmis: %s\n", casesJouablesStr);
    write_client(current_player->client->sock, message);
+   }
+   else {
+      collectAllPoints(game->game_board);
+      sprintf(message, "%s ne peut pas jouer! Il récupère donc toutes les graines.", current_player->name);
+      write_client(p1_sock, message);
+      write_client(p2_sock, message);
+      continue_game(game->game_board);
+   }
 }
 // #endregion Playing
 
