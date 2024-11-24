@@ -13,6 +13,7 @@
     <br /> Fournit à la fois le code pour le serveur et le client.
     <br> Persistance non implementée.
     <br /> <a href = "https://fr.wikipedia.org/wiki/Awal%C3%A9">Page wikipédia du jeu AWALE »</a>
+    <br /> <a href = "https://github.com/Diego-LarrazM/Programmation-d-un-serveur-de-Jeu-Awale">Page git »</a>
     <br /> ---------------------------------------
     <br />
     Projet pour l'<a href="https://www.insa-lyon.fr/fr">INSA</a> 4IF
