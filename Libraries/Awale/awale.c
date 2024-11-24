@@ -5,13 +5,11 @@
 Plateau* initGame(){
     Plateau* p = (Plateau*)malloc(sizeof(Plateau));
     for(int i = 0; i < NB_CASES; ++i) p->cases[i] = 4;
-    //p->cases[0] = 1; p->cases[2] = 10; p->cases[3] = 2; p->cases[5] = 1;
 
     p->grainesJ1 = p->grainesJ2 = 0;
-    // p->grainesJ1 = 25;
 
 
-    //SENS HORAIRE A DEFINIR par joueurs////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //SENS HORAIRE DEFINI PAR DEFAUT//
     p->sensJeu = HORAIRE;
 
 

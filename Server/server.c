@@ -171,7 +171,7 @@ void continue_game(Game *game)
       sprintf(message, "%s ne peut pas jouer! Il récupère donc toutes les graines.", current_player->name);
       write_client(p1_sock, message);
       write_client(p2_sock, message);
-      continue_game(game->game_board);
+      continue_game(game);
    }
 }
 // #endregion Playing
@@ -291,20 +291,9 @@ void* decline_friend_timeout(void* arg) {
 
 
 void decline_friend(PlayerInfo* declined, const char* message){
-   PlayerInfo* otherPlayer = declined->asking_friends;
-
-   declined->player_state = IDLE;
-   declined->asking_friends = NULL;
+   if(declined->player_state == AWAITING_FRIEND) declined->player_state = IDLE;
    if (declined->client)
       write_client(declined->client->sock, message);
-
-   if(otherPlayer->player_state == RESPONDING_FRIEND){
-      otherPlayer->player_state = IDLE;
-      if (otherPlayer->client)
-         write_client(otherPlayer->client->sock, message);
-   }  
-   otherPlayer->asking_friends = NULL;
-   
 }
 // #endregion Friends
 
@@ -684,7 +673,7 @@ void read_request(Client *requester, const char *req)
       }
       // Changing states
       req_player->player_state = AWAITING_FRIEND;
-      req_player->asking_friends = to_friend;
+      req_player->asking_friends = requester->player;
       to_friend->player_state = RESPONDING_FRIEND;
       to_friend->asking_friends = requester->player;
 
@@ -692,7 +681,7 @@ void read_request(Client *requester, const char *req)
       char friend_request_msg[MAX_NAME_SIZE + 100];
       strcpy(friend_request_msg, req_player->name);
       strcat(friend_request_msg, " wants to be friends... /accept or /decline ?");
-      
+
       write_client(to_friend->client->sock, friend_request_msg);  
       write_client(requester->sock, "Sent friend request."); 
       manage_timeout(req_player, AWAITING_FRIEND, "Timeout: Friend request.", decline_friend_timeout);
@@ -733,20 +722,27 @@ void read_request(Client *requester, const char *req)
                if(askingPlayer->client) send_error_message(askingPlayer->client, "Error: Max friend count achieved.", IDLE);
                break;
             }
+            
             if (are_friend(requester->player, askingPlayer)){
                send_error_message(requester, "Error: You are already friends.", IDLE);
                if(askingPlayer->client) send_error_message(askingPlayer->client, "Error: You are already friends.", IDLE);
                break;
             }
-            // Adding friend
+            // Adding friend           
             add_friend(requester->player, askingPlayer); 
             write_client(requester->sock, "Success: Friend added !");
             if(askingPlayer->client) write_client(askingPlayer->client->sock, "Success: Friend added !");
-            requester->player->player_state = IDLE; // stops listening
+            requester->player->player_state = IDLE; // stops waiting
             if(askingPlayer->player_state != LOGGED_OUT) askingPlayer->player_state = IDLE;
-
          }
-         else decline_friend(askingPlayer, "Friend request was declined.");
+         else 
+         {
+            decline_friend(askingPlayer, "Friend request was declined.");
+            req_player->player_state = IDLE; // stops waiting
+            write_client(requester->sock, "Friend request was declined.");
+         }
+         
+         
          break;
 
       default:
@@ -1072,8 +1068,26 @@ static void app(void)
                write_client(c->sock, "Welcome back!");
                // We re-inform him of the state of the game
                Game* game = p->current_game;
+               char message[300];
                Joueur this_player = (game->players_involved[0] == p) ? JOUEUR1 : JOUEUR2;
+               PlayerInfo* current_player = game->players_involved[game->game_board->joueurCourant - 1];
+               //Score
+               sprintf(message, "Score : %s : %d - %s : %d", game->players_involved[0]->name, game->game_board->grainesJ1, game->players_involved[1]->name, game->game_board->grainesJ2);
+               write_client(c->sock, message);
+               //Board
                print_board_to(this_player, game, 0);
+               //turn
+               sprintf(message, "Au tour de %s", current_player->name);
+               write_client(c->sock, message);
+
+               // Print possible houses to pick for current player
+               BitField_1o casesJouables = (this_player == game->game_board->joueurCourant) ? (isOpponentFamished(game->game_board) ? playableFamine(game->game_board) : playable(game->game_board)) : 0;
+               if (casesJouables) { // If there's a possible move
+                  char casesJouablesStr[20];
+                  bitfieldToString(this_player, casesJouables, casesJouablesStr);
+                  sprintf(message, "Choissisez une case parmis: %s\n", casesJouablesStr);
+                  write_client(c->sock, message);
+               }
                
                // We inform the other player
                SOCKET other_client_sock = game->players_involved[(this_player)%2]->client->sock;

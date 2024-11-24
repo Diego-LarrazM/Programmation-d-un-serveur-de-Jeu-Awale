@@ -226,6 +226,8 @@ Affiche toutes les commandes qui sont à la disposition du client.
 ```
 /help [ENTER]
 /logout                              : to quit the server
+/profile [<player-name>]             : to see your or another player's profile
+/setbio <new-bio>                    : to set a new bio to your profile
 /msg <player-name> <message-content> : to send a private message
 /challenge <player-name> [private]   : to challenge a friend
 /move <house-number>                 : to choose a move to play
@@ -267,6 +269,62 @@ __|
 ```
 
 Toto: Hello World !
+__|
+```
+
+<br/><br/>
+
+### < ---------------- `/profile [<player-name>]` ----------------- >
+Affiche son profil ou le profil d'un autre joueur
+* Exemple : <br/>
+
+*Pour Toto*
+```
+C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> /profile
+<-- Profile -->
+<- Name:  Toto ->
+<- Played games: 10, Games Won: 6 ->
+<- Bio ->
+Best bio in the world!
+__|
+```
+
+*Pour Jojo*
+```
+C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> /profile Toto
+<-- Profile -->
+<- Name:  Toto ->
+<- Played games: 10, Games Won: 6 ->
+<- Bio ->
+Best bio in the world!
+__|
+```
+
+<br/><br/>
+
+### < ---------------- `/setbio <new-bio>` ----------------- >
+Change 
+* Exemple : <br/>
+
+*Pour Toto*
+```
+C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> /profile
+<-- Profile -->
+<- Name:  Toto ->
+<- Played games: 10, Games Won: 6 ->
+<- Bio ->
+
+
+C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> /setbio Best bio in the world!
+Bio changed.
+
+
+C:xx/PROGRAMATION-D-UN-SERVEUR-DE-JEU-AWALE> /profile Toto
+<-- Profile -->
+<- Name:  Toto ->
+<- Played games: 10, Games Won: 6 ->
+<- Bio ->
+Best bio in the world!
 __|
 ```
 
@@ -626,8 +684,6 @@ Non-definie pour l'instant.
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
-
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
 
 * [Choose an Open Source License](https://choosealicense.com)
 * [Best-README-Template](https://github.com/othneildrew/Best-README-Template/blob/main/BLANK_README.md)
